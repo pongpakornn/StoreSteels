@@ -83,11 +83,6 @@ namespace StoreSteels.Views
             {
                 NavigateToPage(new ProductControlView(this.CurrentUser), "INVENTORY REGISTRATION");
             }
-            // 🆕 มีสิทธิ์ MaxMinCalculator
-            else if (CurrentUser.CanViewMaxMinCalculator)
-            {
-                NavigateToPage(new MaxMinCalculatorView(this.CurrentUser), "MAX-MIN ForecastControl");
-            }
             // กรณีอื่นๆ (ไม่มีสิทธิ์อะไรเลยจริงๆ เผื่อกันพัง — ทางปฏิบัติไม่ควรเกิดถ้าตั้ง Permission ครบ)
             else
             {
@@ -214,19 +209,6 @@ namespace StoreSteels.Views
                 return;
             }
             NavigateToPage(new ProductControlView(this.CurrentUser), "INVENTORY REGISTRATION");
-        }
-
-        //private void BtnMaxMinCalculator_Click(object sender, RoutedEventArgs e)
-        // => NavigateToPage(new MaxMinCalculatorView(this.CurrentUser), "MAX-MIN ForecastControl");
-        // ✅ เพิ่ม Guard Check สิทธิ์
-        private void BtnMaxMinCalculator_Click(object sender, RoutedEventArgs e)
-        {
-            if (!CurrentUser.CanViewMaxMinCalculator)
-            {
-                NotificationManager.Show("Access Denied", "คุณไม่มีสิทธิ์เข้าใช้งานหน้า Max-Min ForecastControl", false);
-                return;
-            }
-            NavigateToPage(new MaxMinCalculatorView(this.CurrentUser), "MAX-MIN ForecastControl");
         }
 
         #endregion

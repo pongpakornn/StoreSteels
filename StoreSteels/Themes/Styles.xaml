@@ -41,4 +41,51 @@
         </Setter>
     </Style>
 
+    <!--
+        SidebarExpanderStyle: the default WPF Expander template (Aero2) draws its own
+        expand/collapse chevron as part of the header ToggleButton's chrome, separate from
+        and drawn alongside whatever content is put in Expander.Header. That's why the
+        stock chevron kept showing up next to/instead of the custom down-arrow icon
+        (/Assets/Icons/64down_arrowFF.png) set in MainView.xaml's ExpanderScanner.Header.
+        This template replaces the built-in chrome with a plain ToggleButton that renders
+        only the supplied Header content, so the custom icon is the only expand indicator.
+    -->
+    <Style x:Key="SidebarExpanderStyle" TargetType="Expander">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Expander">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <ToggleButton Grid.Row="0"
+                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      Cursor="Hand"
+                                      HorizontalContentAlignment="Stretch">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="{TemplateBinding Background}">
+                                        <ContentPresenter Content="{TemplateBinding Content}"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                            <ContentPresenter ContentSource="Header"/>
+                        </ToggleButton>
+
+                        <ContentPresenter Grid.Row="1" x:Name="ExpandSite" Visibility="Collapsed"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>
