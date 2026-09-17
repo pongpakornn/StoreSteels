@@ -105,7 +105,7 @@
                                 <Border Background="{StaticResource SoftGray}" CornerRadius="6" Padding="12,6" Margin="0,6,0,2">
                                     <TextBlock FontSize="13" FontWeight="ExtraBold" Foreground="{StaticResource MainPurple}">
                                         <Run Text="Group : "/>
-                                        <Run Text="{Binding Name}"/>
+                                        <Run Text="{Binding Name, Mode=OneWay}"/>
                                     </TextBlock>
                                 </Border>
                             </Expander.Header>
