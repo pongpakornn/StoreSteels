@@ -57,7 +57,7 @@ namespace StoreSteels.Models
         }
 
         // =========================================================================
-        // 🆕 [เพิ่มใหม่] Dashboard / ProductControl / MaxMinCalculator
+        // 🆕 [เพิ่มใหม่] Dashboard / ProductControl
         // ใช้ Pattern เดียวกับ CanViewScanIn/CanViewScanOut เป๊ะๆ:
         // Level 1 bypass อัตโนมัติเท่านั้น ส่วน Level 2, 3 ต้องมีแถว Permission ในตารางจริง
         // =========================================================================
@@ -79,12 +79,12 @@ namespace StoreSteels.Models
             }
         }
 
-        public bool CanViewMaxMinCalculator
+        public bool CanViewPackingCard
         {
             get
             {
                 if (UserLevel == 1) return true;
-                return Permissions.Any(p => p.SystemId == "MaxMinCalc" && p.CanView);
+                return Permissions.Any(p => p.SystemId == "PackingCard" && p.CanView);
             }
         }
 

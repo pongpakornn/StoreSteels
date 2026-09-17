@@ -58,7 +58,7 @@
                             <TextBlock VerticalAlignment="Center" Margin="10,0,0,0"
                                    Visibility="{Binding IsSidebarOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Run Text="STORE" FontWeight="ExtraBold" Foreground="White" FontSize="18" />
-                            <Run Text=" PC" FontWeight="ExtraBold" Foreground="#AAAAAA" FontSize="18"/>
+                            <Run Text=" STEELS" FontWeight="ExtraBold" Foreground="#AAAAAA" FontSize="18"/>
                             </TextBlock>
                         </StackPanel>
                     </Border>
@@ -90,13 +90,14 @@
                     <!-- End Function -->
 
                     <!-- Function Button : Dropdown -->
-                    <Expander x:Name="ExpanderScanner" 
-                              Background="Transparent" 
-                              BorderThickness="0" 
-                              Margin="0,5,0,0" 
-                              Padding="0" 
+                    <Expander x:Name="ExpanderScanner"
+                              Style="{StaticResource SidebarExpanderStyle}"
+                              Background="Transparent"
+                              BorderThickness="0"
+                              Margin="0,5,0,0"
+                              Padding="0"
                               HorizontalContentAlignment="Stretch"
-                              Expanded="ExpanderScanner_Expanded" 
+                              Expanded="ExpanderScanner_Expanded"
                               Collapsed="ExpanderScanner_Collapsed"
                               Visibility="{Binding CurrentUser.CanViewScannerMenu, Converter={StaticResource BoolToVis}}">
 
@@ -180,19 +181,21 @@
                     </Button>
                     <!-- End Function -->
 
-                    <!-- Function Button : MaxMinCalculatorl -->
-                    <Button Style="{StaticResource SidebarButtonStyle}" Click="BtnMaxMinCalculator_Click" Margin="0,5,0,0" Visibility="{Binding CurrentUser.CanViewMaxMinCalculator, Converter={StaticResource BoolToVis}}">
-                            <Grid HorizontalAlignment="Stretch">
+                    <!-- Function Button : Packing Card -->
+                    <Button Style="{StaticResource SidebarButtonStyle}" Click="BtnPackingCard_Click" Margin="0,5,0,0" Visibility="{Binding CurrentUser.CanViewPackingCard, Converter={StaticResource BoolToVis}}">
+                        <Grid HorizontalAlignment="Stretch">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="50"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Image Grid.Column="0" Source="/Assets/Icons/CalculatorMxMn.png" Style="{StaticResource SidebarIconStyle}" Margin="1,0,0,0"/>
-                            <TextBlock Grid.Column="1" Text="Max-Min Calculator" Style="{StaticResource SidebarTextStyle}" Visibility="{Binding IsSidebarOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <Viewbox Grid.Column="0" Width="24" Height="24" HorizontalAlignment="Left" Margin="12,0,0,0">
+                                <Path Fill="White" Data="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
+                            </Viewbox>
+                            <TextBlock Grid.Column="1" Text="ปริ้นการ์ดเบิกมา" Style="{StaticResource SidebarTextStyle}" Visibility="{Binding IsSidebarOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                         </Grid>
                     </Button>
                     <!-- End Function -->
-                    
+
                     <!-- Product Control -->
                     <!--<Button Style="{StaticResource SidebarButtonStyle}" Margin="0,5,0,0" Click="btnProductControls_Click">
                             <Grid HorizontalAlignment="Stretch">

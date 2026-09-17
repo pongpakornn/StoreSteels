@@ -4,7 +4,7 @@
     <!--
         Shared "Cyber" theme color tokens, collected from the per-page copies that used
         to be redeclared in every View's Resources block (MainView, PRView, ScanInView,
-        ScanOutView, StoreMaxMinView, MaxMinCalculatorView, ManageUserView, ProductControlView,
+        ScanOutView, StoreMaxMinView, ManageUserView, ProductControlView,
         UserDetailWindow). Kept here so every window/page in the app shares one palette.
     -->
 
