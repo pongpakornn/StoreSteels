@@ -29,6 +29,10 @@ namespace StoreSteels.Core
         // ตัวที่ระบบใช้งานจริง
         public static string ConnStr => HomeConnStr;
 
+        // 🏭 ERP (CHR) - อ่านอย่างเดียวสำหรับหน้า Packing Card เท่านั้น แยกจาก Stock DB ด้านบน
+        public static readonly string ErpConnStr =
+            @"Server=192.168.10.10; Database=CHR; User ID=sa; Password=; TrustServerCertificate=True; Encrypt=False; ApplicationIntent=ReadOnly;";
+
         public static UserSession CurrentUser { get; set; }
     }
 }

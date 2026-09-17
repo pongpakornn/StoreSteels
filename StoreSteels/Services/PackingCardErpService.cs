@@ -12,7 +12,7 @@ namespace StoreSteels.Services
     // ไม่มีการเขียน/แก้ไขข้อมูลกลับเข้า ERP หรือสร้างตาราง queue ใดๆ ฝั่ง Stock DB
     public class PackingCardErpService
     {
-        private readonly string _erpConnStr = ErpConfig.ConnStr;
+        private readonly string _erpConnStr = GlobalConfig.ErpConnStr;
         private readonly IScannerLogLookupService _scannerLogLookup;
 
         public PackingCardErpService(IScannerLogLookupService scannerLogLookup = null)
@@ -24,8 +24,7 @@ namespace StoreSteels.Services
         {
             var list = new List<PackingCardModel>();
 
-            // ⚠️ ไม่มีคอลัมน์ Group (FGDCODE) ยืนยันจากผู้ใช้ในรอบล่าสุด แต่หน้าจอต้องใช้จัดกลุ่มคลัง
-            // จึงดึง FGDCODE มาด้วยตามสเปกเดิม - ถ้าคอลัมน์นี้ไม่มีจริงในตาราง ให้ลบบรรทัด src.FGDCODE ออก
+            // FGDCODE = คลัง (Group) ใช้จัดกลุ่มแถวในตาราง
             const string sql = @"
                 SELECT
                     src.FTRNNO       AS TicketNo,
@@ -68,8 +67,8 @@ namespace StoreSteels.Services
                 }
             }
 
-            // กรองรายการที่ถูกเบิกไปแล้วออก โดยเทียบ key TicketNo + ItemNo กับ Log ของ Scanner ฝั่ง Stock
-            return list.Where(x => !_scannerLogLookup.IsAlreadyScanned(x.TicketNo, x.ItemNo)).ToList();
+            // กรองรายการที่ถูกสแกนไปแล้วออก โดยเทียบกับ TRN_SCAN.REF_NO ของระบบ MULTI-SCAN (IN/OUT) เดิม
+            return list.Where(x => !_scannerLogLookup.IsAlreadyScanned(x.TicketNo, x.LotNo)).ToList();
         }
     }
 }
