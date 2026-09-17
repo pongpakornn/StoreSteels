@@ -73,7 +73,9 @@ namespace StoreSteels.Services
                             WorkOrder = rdr.IsDBNull(ordWorkOrder) ? "" : rdr.GetString(ordWorkOrder).Trim(),
                             TicketDate = rdr.IsDBNull(ordTicketDate) ? DateTime.MinValue : rdr.GetDateTime(ordTicketDate),
                             JobName = rdr.IsDBNull(ordJobName) ? "" : rdr.GetString(ordJobName).Trim(),
-                            Qty = rdr.IsDBNull(ordQty) ? 0 : rdr.GetDecimal(ordQty)
+                            // FQTY ฝั่ง ERP เป็น float/real ไม่ใช่ decimal/numeric - GetDecimal() cast ตรงๆ ไม่ได้
+                            // (SqlDataReader typed getters ต้องตรงชนิดคอลัมน์เป๊ะ) ใช้ GetValue + Convert แทนให้รองรับทั้งสองแบบ
+                            Qty = rdr.IsDBNull(ordQty) ? 0 : Convert.ToDecimal(rdr.GetValue(ordQty))
                         });
                     }
                 }
