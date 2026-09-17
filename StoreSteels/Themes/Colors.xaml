@@ -30,6 +30,16 @@
          MainView loaded. Restored here using the same light neutral DashboardView already uses. -->
     <SolidColorBrush x:Key="BgLight" Color="#F4F6F9"/>
 
+    <!-- Also referenced only by MainView.xaml's sidebar/header (PrimaryColor, PrimaryDark,
+         AccentColor) but never defined anywhere - same XamlParseException-on-load bug as BgLight,
+         just for the sidebar this time. Values picked to match the existing purple "Cyber" palette:
+         PrimaryColor mirrors AccentPurple/CyberPurple, PrimaryDark is a darkened shade of it for the
+         logo strip, AccentColor is White to match the same white-icon-via-OpacityMask trick already
+         used elsewhere in MainView.xaml (the down-arrow and logout icons). -->
+    <SolidColorBrush x:Key="PrimaryColor" Color="#6750A4"/>
+    <SolidColorBrush x:Key="PrimaryDark" Color="#4D3C7B"/>
+    <SolidColorBrush x:Key="AccentColor" Color="White"/>
+
     <!--
         NOTE: "MintGreen" is intentionally NOT centralized here. ManageUserView.xaml defines it as
         #4CAF50 and ProductControlView.xaml defines it as #2DFFB4 - two different colors sharing the
