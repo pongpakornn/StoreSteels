@@ -49,19 +49,31 @@ namespace StoreSteels.Services
                 conn.Open();
                 using (SqlDataReader rdr = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
                 {
+                    int ordTicketNo = rdr.GetOrdinal("TicketNo");
+                    int ordItemNo = rdr.GetOrdinal("ItemNo");
+                    int ordGroupCode = rdr.GetOrdinal("GroupCode");
+                    int ordLotNo = rdr.GetOrdinal("LotNo");
+                    int ordMaterialCode = rdr.GetOrdinal("MaterialCode");
+                    int ordWorkOrder = rdr.GetOrdinal("WorkOrder");
+                    int ordTicketDate = rdr.GetOrdinal("TicketDate");
+                    int ordJobName = rdr.GetOrdinal("JobName");
+                    int ordQty = rdr.GetOrdinal("Qty");
+
+                    // ภายใต้ SequentialAccess ต้องอ่านแต่ละคอลัมน์ "ครั้งเดียว" และเรียงตาม ordinal จากน้อยไปมาก
+                    // (เช็ค IsDBNull ก่อน ค่อยอ่านค่า - ห้ามอ่านคอลัมน์เดิมซ้ำสองครั้งแบบเดิมที่ใช้ rdr["Col"] ในทั้งเงื่อนไขและค่า)
                     while (rdr.Read())
                     {
                         list.Add(new PackingCardModel
                         {
-                            TicketNo = rdr["TicketNo"] == DBNull.Value ? "" : rdr["TicketNo"].ToString().Trim(),
-                            ItemNo = rdr["ItemNo"] == DBNull.Value ? "" : rdr["ItemNo"].ToString().Trim(),
-                            GroupCode = rdr["GroupCode"] == DBNull.Value ? "" : rdr["GroupCode"].ToString().Trim(),
-                            LotNo = rdr["LotNo"] == DBNull.Value ? "" : rdr["LotNo"].ToString().Trim(),
-                            MaterialCode = rdr["MaterialCode"] == DBNull.Value ? "" : rdr["MaterialCode"].ToString().Trim(),
-                            WorkOrder = rdr["WorkOrder"] == DBNull.Value ? "" : rdr["WorkOrder"].ToString().Trim(),
-                            TicketDate = rdr["TicketDate"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(rdr["TicketDate"]),
-                            JobName = rdr["JobName"] == DBNull.Value ? "" : rdr["JobName"].ToString().Trim(),
-                            Qty = rdr["Qty"] == DBNull.Value ? 0 : Convert.ToDecimal(rdr["Qty"])
+                            TicketNo = rdr.IsDBNull(ordTicketNo) ? "" : rdr.GetString(ordTicketNo).Trim(),
+                            ItemNo = rdr.IsDBNull(ordItemNo) ? "" : rdr.GetString(ordItemNo).Trim(),
+                            GroupCode = rdr.IsDBNull(ordGroupCode) ? "" : rdr.GetString(ordGroupCode).Trim(),
+                            LotNo = rdr.IsDBNull(ordLotNo) ? "" : rdr.GetString(ordLotNo).Trim(),
+                            MaterialCode = rdr.IsDBNull(ordMaterialCode) ? "" : rdr.GetString(ordMaterialCode).Trim(),
+                            WorkOrder = rdr.IsDBNull(ordWorkOrder) ? "" : rdr.GetString(ordWorkOrder).Trim(),
+                            TicketDate = rdr.IsDBNull(ordTicketDate) ? DateTime.MinValue : rdr.GetDateTime(ordTicketDate),
+                            JobName = rdr.IsDBNull(ordJobName) ? "" : rdr.GetString(ordJobName).Trim(),
+                            Qty = rdr.IsDBNull(ordQty) ? 0 : rdr.GetDecimal(ordQty)
                         });
                     }
                 }
