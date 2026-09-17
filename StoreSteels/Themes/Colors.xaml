@@ -31,13 +31,12 @@
     <SolidColorBrush x:Key="BgLight" Color="#F4F6F9"/>
 
     <!-- Also referenced only by MainView.xaml's sidebar/header (PrimaryColor, PrimaryDark,
-         AccentColor). Sidebar/header use the dark "DeepDark" tone (matching the app's intended
-         dark-navy look) rather than the purple accent, which stays reserved for AccentPurple/
-         CyberPurple highlights. PrimaryDark is a darkened shade of it for the logo strip, AccentColor
-         is White to match the same white-icon-via-OpacityMask trick already used elsewhere in
-         MainView.xaml (the down-arrow and logout icons). -->
-    <SolidColorBrush x:Key="PrimaryColor" Color="#1A1C1E"/>
-    <SolidColorBrush x:Key="PrimaryDark" Color="#121316"/>
+         AccentColor). Sidebar/header use the requested "MainPurple" tone (#49454F). PrimaryDark
+         is a darkened shade of it for the logo strip, AccentColor is White to match the same
+         white-icon-via-OpacityMask trick already used elsewhere in MainView.xaml (the down-arrow
+         and logout icons). -->
+    <SolidColorBrush x:Key="PrimaryColor" Color="#49454F"/>
+    <SolidColorBrush x:Key="PrimaryDark" Color="#332F38"/>
     <SolidColorBrush x:Key="AccentColor" Color="White"/>
 
     <!--
