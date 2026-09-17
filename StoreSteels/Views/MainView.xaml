@@ -139,7 +139,7 @@
                                         <ColumnDefinition Width="60"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <Image Grid.Column="0" Source="/Assets/Icons/DOT.png" Margin="-22,0,0,0" Style="{StaticResource SidebarIconStyle}" Width="24" Height="24" HorizontalAlignment="Center"/>
+                                    <Image Grid.Column="0" Source="/Assets/Icons/DOT.png" Style="{StaticResource SidebarIconStyle}" Width="24" Height="24" HorizontalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="MULTI-SCAN ( IN )" Style="{StaticResource SidebarTextStyle}" Visibility="{Binding IsSidebarOpen, Converter={StaticResource BooleanToVisibilityConverter}}" FontSize="11" FontWeight="ExtraBold" />
                                 </Grid>
                             </Button>
@@ -153,7 +153,7 @@
                                         <ColumnDefinition Width="60"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <Image Grid.Column="0" Source="/Assets/Icons/DOT.png" Margin="-22,0,0,0" Style="{StaticResource SidebarIconStyle}" Width="24" Height="24" HorizontalAlignment="Center"/>
+                                    <Image Grid.Column="0" Source="/Assets/Icons/DOT.png" Style="{StaticResource SidebarIconStyle}" Width="24" Height="24" HorizontalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="MULTI-SCAN ( OUT )" Style="{StaticResource SidebarTextStyle}" Visibility="{Binding IsSidebarOpen, Converter={StaticResource BooleanToVisibilityConverter}}" FontSize="11" FontWeight="ExtraBold" VerticalAlignment="Center"/>
                                 </Grid>
                             </Button>
