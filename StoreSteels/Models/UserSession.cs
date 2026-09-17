@@ -79,6 +79,15 @@ namespace StoreSteels.Models
             }
         }
 
+        public bool CanViewPackingCard
+        {
+            get
+            {
+                if (UserLevel == 1) return true;
+                return Permissions.Any(p => p.SystemId == "PackingCard" && p.CanView);
+            }
+        }
+
         // กำหนดไม่ให้ User3 เห็นเมนูอื่นๆ เห็นเพียงเเค่ Scanner
         public bool CanViewAdminMenu => (UserLevel == 1 || UserLevel == 2);
     }

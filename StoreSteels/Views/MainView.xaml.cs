@@ -211,6 +211,16 @@ namespace StoreSteels.Views
             NavigateToPage(new ProductControlView(this.CurrentUser), "INVENTORY REGISTRATION");
         }
 
+        private void BtnPackingCard_Click(object sender, RoutedEventArgs e)
+        {
+            if (!CurrentUser.CanViewPackingCard)
+            {
+                NotificationManager.Show("Access Denied", "คุณไม่มีสิทธิ์เข้าใช้งานหน้าปริ้นการ์ดเบิกมา", false);
+                return;
+            }
+            NavigateToPage(new PackingCardView(this.CurrentUser), "PACKING CARD");
+        }
+
         #endregion
 
         #region === [ Reserved for Future Development : สำรองไว้เผื่อได้พัฒนาในอนาคต ] ===
