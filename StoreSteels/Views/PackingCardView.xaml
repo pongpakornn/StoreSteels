@@ -195,14 +195,10 @@
 
                                 <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding JobName}" FontSize="13" FontWeight="Bold" TextWrapping="Wrap" Margin="0,4,0,4"/>
 
-                                <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
-                                    <TextBlock FontSize="12" FontWeight="SemiBold">
-                                        <Run Text="Quantity: "/><Run Text="{Binding Qty}"/>
-                                    </TextBlock>
-                                    <TextBlock FontSize="12" FontWeight="SemiBold" Margin="15,0,0,0">
-                                        <Run Text="TicketDate: "/><Run Text="{Binding TicketDate, StringFormat='dd-MM-yyyy'}"/>
-                                    </TextBlock>
-                                </StackPanel>
+                                <!-- ไม่แสดง TicketDate บนการ์ด (ใช้แค่ตอนกำหนดช่วงข้อมูลที่ดึงมาแสดงเท่านั้น) -->
+                                <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" FontSize="13" FontWeight="Bold">
+                                    <Run Text="Quantity: "/><Run Text="{Binding Qty, StringFormat='{}{0:0.##}'}"/>
+                                </TextBlock>
                             </Grid>
                         </Border>
                     </StackPanel>
@@ -283,7 +279,7 @@
                         <DataGridTextColumn Header="WORK ORDER" Binding="{Binding WorkOrder}" Width="1.2*"/>
                         <DataGridTextColumn Header="LOT NO" Binding="{Binding LotNo}" Width="1*"/>
                         <DataGridTextColumn Header="PART NAME" Binding="{Binding JobName}" Width="2*"/>
-                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty}" Width="0.7*"/>
+                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty, StringFormat='{}{0:0.##}'}" Width="0.7*"/>
                         <DataGridTextColumn Header="TICKET DATE" Binding="{Binding TicketDate, StringFormat='dd-MM-yyyy'}" Width="1*"/>
 
                         <DataGridTemplateColumn Header="ACTION" Width="90">

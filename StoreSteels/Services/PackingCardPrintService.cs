@@ -1,6 +1,7 @@
 using StoreSteels.Models;
 using System;
 using System.Collections.Generic;
+using System.Printing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -9,10 +10,14 @@ namespace StoreSteels.Services
 {
     // สร้าง Visual การ์ด Packing แล้วสั่งพิมพ์ทีละใบผ่าน PrintDialog/PrintVisual ของ WPF เอง
     // (โปรเจกต์นี้ยังไม่มี Print service กลางมาก่อน จึงสร้างใหม่โดยใช้กลไกมาตรฐานของ WPF)
+    // ขนาดกระดาษ: เครื่องพิมพ์ Brother QL-800 ป้ายฉลากม้วนต่อเนื่อง สูง 62mm x กว้าง(แนวนอน) 70mm
     public class PackingCardPrintService
     {
-        private const double CardWidth = 380;
-        private const double CardHeight = 220;
+        private const double MmToPx = 96.0 / 25.4; // WPF/PrintTicket ใช้หน่วย 1/96 นิ้ว
+        private const double LabelWidthMm = 70;
+        private const double LabelHeightMm = 62;
+        private const double CardWidth = LabelWidthMm * MmToPx;
+        private const double CardHeight = LabelHeightMm * MmToPx;
 
         // คืนค่าจำนวนใบที่พิมพ์สำเร็จ, onProgress แจ้งความคืบหน้าจริงทีละใบ (current, total)
         public int PrintCards(IList<PackingCardModel> items, Action<int, int> onProgress = null)
@@ -21,6 +26,16 @@ namespace StoreSteels.Services
 
             var printDialog = new PrintDialog();
             if (printDialog.ShowDialog() != true) return 0;
+
+            try
+            {
+                printDialog.PrintTicket.PageMediaSize = new PageMediaSize(CardWidth, CardHeight);
+                printDialog.PrintTicket.PageOrientation = PageOrientation.Landscape;
+            }
+            catch
+            {
+                // บาง driver ของเครื่องพิมพ์อาจไม่รองรับการกำหนดขนาดกระดาษเอง - ปล่อยให้ใช้ค่า default ของเครื่องแทน
+            }
 
             int printed = 0;
             for (int i = 0; i < items.Count; i++)
@@ -101,10 +116,17 @@ namespace StoreSteels.Services
             Grid.SetColumnSpan(partName, 2);
             grid.Children.Add(partName);
 
-            // แถว 5: Quantity | TicketDate
-            var lastRow = MakeRow($"Quantity: {item.Qty}", $"TicketDate: {item.TicketDate:dd-MM-yyyy}", 4);
-            Grid.SetColumnSpan(lastRow, 2);
-            grid.Children.Add(lastRow);
+            // แถว 5: Quantity (ไม่ต้องพิมพ์ TicketDate ลงบน Packing Card ตามที่ร้องขอ)
+            var qtyText = new TextBlock
+            {
+                Text = $"Quantity: {item.Qty:0.##}",
+                FontSize = 14,
+                FontWeight = FontWeights.Bold
+            };
+            Grid.SetRow(qtyText, 4);
+            Grid.SetColumn(qtyText, 0);
+            Grid.SetColumnSpan(qtyText, 2);
+            grid.Children.Add(qtyText);
 
             border.Child = grid;
             return border;

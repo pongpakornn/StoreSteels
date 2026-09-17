@@ -30,7 +30,7 @@ namespace StoreSteels.Models
 
         // ข้อความสำหรับ QR Code: TicketNo | MaterialCode | WorkOrder | LotNo | JobName | Qty
         public string QrText =>
-            $"{TicketNo} | {MaterialCode} | {WorkOrder} | {LotNo} | {JobName} | {Qty}";
+            $"{TicketNo} | {MaterialCode} | {WorkOrder} | {LotNo} | {JobName} | {Qty:0.##}";
 
         private BitmapImage _qrImage;
         // สร้าง QR ครั้งแรกที่ถูกเรียกใช้แล้ว cache ไว้ (ใช้ทั้งพรีวิวและตอนพิมพ์)
