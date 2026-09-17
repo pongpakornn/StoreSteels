@@ -6,9 +6,6 @@
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="MainPurple" Color="#49454F"/>
-        <SolidColorBrush x:Key="AccentPurple" Color="#6750A4"/>
-
         <Style x:Key="AnimatedButton" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource MainPurple}"/>
             <Setter Property="Foreground" Value="White"/>

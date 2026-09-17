@@ -7,13 +7,6 @@
       RenderTransformOrigin="0.5,0.5">
 
     <Page.Resources>
-        <local:StatusToColorConverter x:Key="StatusToColorConverter"/>
-        <local:PathToImageConverter x:Key="PathToImageConverter" />
-        <SolidColorBrush x:Key="MainPurple" Color="#49454F"/>
-        <SolidColorBrush x:Key="AccentPurple" Color="#6750A4"/>
-        <SolidColorBrush x:Key="CyberPurple" Color="#6750A4"/>
-        <SolidColorBrush x:Key="CyberPink" Color="#D0BCFF"/>
-
         <Style x:Key="CyberInput" TargetType="TextBox">
             <Setter Property="Height" Value="45"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>

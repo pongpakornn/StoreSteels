@@ -599,12 +599,6 @@
 
     <!-- Style -->
     <Page.Resources>
-        <helpers:BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
-
-        <SolidColorBrush x:Key="MainPurple" Color="#49454F"/>
-        <SolidColorBrush x:Key="SuccessGreen" Color="#2E7D32"/>
-        <SolidColorBrush x:Key="AccentPurple" Color="#6750A4"/>
-
         <!-- Style TextBox -->
         <Style x:Key="CyberInput" TargetType="TextBox">
             <Setter Property="Height" Value="42"/>

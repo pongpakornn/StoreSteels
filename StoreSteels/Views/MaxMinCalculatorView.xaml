@@ -4,16 +4,6 @@
       Title="Max-Min Forecast &amp; Configuration Control" Background="Transparent">
 
     <Page.Resources>
-        <SolidColorBrush x:Key="MainPurple" Color="#49454F"/>
-        <SolidColorBrush x:Key="AccentPurple" Color="#6750A4"/>
-        <SolidColorBrush x:Key="ResultGreen" Color="#2E7D32"/>
-        <SolidColorBrush x:Key="ExcelOrange" Color="#D84315"/>
-        <SolidColorBrush x:Key="ExcelBlue" Color="#1565C0"/>
-        <SolidColorBrush x:Key="ActionBlue" Color="#1976D2"/>
-        <SolidColorBrush x:Key="DeepDark" Color="#1A1C1E"/>
-        <SolidColorBrush x:Key="CyberPurple" Color="#6750A4"/>
-        <SolidColorBrush x:Key="CyberPink" Color="#D0BCFF"/>
-
         <Style x:Key="CyberButton" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource CyberPurple}"/>
             <Setter Property="Foreground" Value="White"/>

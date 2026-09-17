@@ -6,12 +6,6 @@
             Title="StoreSteels" Height="800" Width="1400" 
             Background="{StaticResource BgLight}">
 
-    <Window.Resources>
-        <helpers:BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <local:PermissionToVisibilityConverter x:Key="PermissionToVisibilityConverter"/>
-    </Window.Resources>
-
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="SidebarColumn" Width="Auto"/>

@@ -5,9 +5,8 @@
       RenderTransformOrigin="0.5,0.5">
 
     <Page.Resources>
-        <SolidColorBrush x:Key="MainPurple" Color="#49454F"/>
-        <SolidColorBrush x:Key="AccentPurple" Color="#6750A4"/>
-        <SolidColorBrush x:Key="DestructiveRed" Color="#C62828"/>
+        <!-- MintGreen is page-specific: ProductControlView.xaml uses the same key name for a
+             different color (#2DFFB4), so it is intentionally not centralized. -->
         <SolidColorBrush x:Key="MintGreen" Color="#4CAF50"/>
 
         <Style x:Key="AnimatedButton" TargetType="Button">

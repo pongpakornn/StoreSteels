@@ -11,14 +11,9 @@
     </Page.DataContext>
 
     <Page.Resources>
-        <conv:BoolToShowHideConverter x:Key="BoolToShowHide"/>
-        <conv:BoolToShowColorConverter x:Key="BoolToShowColor"/>
-        <SolidColorBrush x:Key="DeepDark" Color="#1A1C1E"/>
-        <SolidColorBrush x:Key="CyberPurple" Color="#6750A4"/>
-        <SolidColorBrush x:Key="CyberPink" Color="#D0BCFF"/>
-        <SolidColorBrush x:Key="SoftGray" Color="#F4F4F9"/>
+        <!-- MintGreen is page-specific: ManageUserView.xaml uses the same key name for a
+             different color (#4CAF50), so it is intentionally not centralized. -->
         <SolidColorBrush x:Key="MintGreen" Color="#2DFFB4"/>
-        <SolidColorBrush x:Key="MainPurple" Color="#49454F"/>
 
         <Style x:Key="CyberButton" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource CyberPurple}"/>
