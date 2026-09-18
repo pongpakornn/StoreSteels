@@ -19,13 +19,14 @@ namespace StoreSteels.Services
         private const double CardWidth = LabelWidthMm * MmToPx;
         private const double CardHeight = LabelHeightMm * MmToPx;
 
-        // คืนค่าจำนวนใบที่พิมพ์สำเร็จ, onProgress แจ้งความคืบหน้าจริงทีละใบ (current, total)
-        public int PrintCards(IList<PackingCardModel> items, Action<int, int> onProgress = null)
+        // คืนรายการที่พิมพ์สำเร็จจริง (เรียงตามลำดับที่พิมพ์) - onProgress แจ้งความคืบหน้าจริงทีละใบ
+        public List<PackingCardModel> PrintCards(IList<PackingCardModel> items, Action<int, int> onProgress = null)
         {
-            if (items == null || items.Count == 0) return 0;
+            var printed = new List<PackingCardModel>();
+            if (items == null || items.Count == 0) return printed;
 
             var printDialog = new PrintDialog();
-            if (printDialog.ShowDialog() != true) return 0;
+            if (printDialog.ShowDialog() != true) return printed;
 
             try
             {
@@ -37,7 +38,6 @@ namespace StoreSteels.Services
                 // บาง driver ของเครื่องพิมพ์อาจไม่รองรับการกำหนดขนาดกระดาษเอง - ปล่อยให้ใช้ค่า default ของเครื่องแทน
             }
 
-            int printed = 0;
             for (int i = 0; i < items.Count; i++)
             {
                 var visual = BuildCardVisual(items[i]);
@@ -45,14 +45,16 @@ namespace StoreSteels.Services
                 visual.Arrange(new Rect(new Size(CardWidth, CardHeight)));
 
                 printDialog.PrintVisual(visual, $"Packing Card - {items[i].TicketNo}");
-                printed++;
+                printed.Add(items[i]);
 
-                onProgress?.Invoke(printed, items.Count);
+                onProgress?.Invoke(printed.Count, items.Count);
             }
 
             return printed;
         }
 
+        // Layout ตามการ์ดตัวอย่าง: หัวการ์ด (โลโก้ + ชื่อบริษัท) + QR มุมขวาบน, แล้วตามด้วย
+        // Bill/Group, Work Order/Lot No., Part Name เต็มแถว, Quantity/TicketDate
         public FrameworkElement BuildCardVisual(PackingCardModel item)
         {
             var border = new Border
@@ -61,93 +63,151 @@ namespace StoreSteels.Services
                 Height = CardHeight,
                 Background = Brushes.White,
                 BorderBrush = Brushes.Black,
-                BorderThickness = new Thickness(1.5),
-                Padding = new Thickness(14)
+                BorderThickness = new Thickness(1.2),
+                Padding = new Thickness(10)
             };
 
-            var grid = new Grid();
-            for (int i = 0; i < 5; i++)
-                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var root = new Grid();
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // header
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // divider
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // bill/group
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // workorder/lot
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // part name
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // qty/date
 
-            // แถว 1: Bill No เต็มแถว ตัวใหญ่
-            var billNo = new TextBlock
-            {
-                Text = item.TicketNo,
-                FontSize = 22,
-                FontWeight = FontWeights.Black,
-                Margin = new Thickness(0, 0, 0, 8)
-            };
-            Grid.SetRow(billNo, 0);
-            Grid.SetColumn(billNo, 0);
-            grid.Children.Add(billNo);
+            root.Children.Add(BuildHeader(item));
+            Grid.SetRow(root.Children[0], 0);
 
-            // มุมขวาบน: QR Code (ครอบคลุมแถว 1-3)
-            var qrImage = new Image
-            {
-                Width = 90,
-                Height = 90,
-                Source = item.QrImage,
-                VerticalAlignment = VerticalAlignment.Top
-            };
-            Grid.SetRow(qrImage, 0);
-            Grid.SetRowSpan(qrImage, 3);
-            Grid.SetColumn(qrImage, 1);
-            grid.Children.Add(qrImage);
+            var divider = new Border { Height = 1, Background = Brushes.LightGray, Margin = new Thickness(0, 6, 0, 6) };
+            Grid.SetRow(divider, 1);
+            root.Children.Add(divider);
 
-            // แถว 2: Group | Work Order
-            grid.Children.Add(MakeRow($"Group: {item.GroupCode}", $"Work Order: {item.WorkOrder}", 1));
+            var billGroup = BuildFieldRow("Bill", item.TicketNo, "Group", item.GroupCode);
+            Grid.SetRow(billGroup, 2);
+            root.Children.Add(billGroup);
 
-            // แถว 3: Lot No | Material Code
-            grid.Children.Add(MakeRow($"Lot No: {item.LotNo}", $"Material Code: {item.MaterialCode}", 2));
+            var workLot = BuildFieldRow("Work Order", item.WorkOrder, "LOT NO.", item.LotNo);
+            Grid.SetRow(workLot, 3);
+            root.Children.Add(workLot);
 
-            // แถว 4: Part Name เต็มแถว
-            var partName = new TextBlock
-            {
-                Text = item.JobName,
-                FontSize = 14,
-                FontWeight = FontWeights.Bold,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 6, 0, 6)
-            };
-            Grid.SetRow(partName, 3);
-            Grid.SetColumn(partName, 0);
-            Grid.SetColumnSpan(partName, 2);
-            grid.Children.Add(partName);
+            var partNameRow = BuildSingleFieldRow("Part Name", item.JobName);
+            Grid.SetRow(partNameRow, 4);
+            root.Children.Add(partNameRow);
 
-            // แถว 5: Quantity (ไม่ต้องพิมพ์ TicketDate ลงบน Packing Card ตามที่ร้องขอ)
-            var qtyText = new TextBlock
-            {
-                Text = $"Quantity: {item.Qty:0.##}",
-                FontSize = 14,
-                FontWeight = FontWeights.Bold
-            };
-            Grid.SetRow(qtyText, 4);
-            Grid.SetColumn(qtyText, 0);
-            Grid.SetColumnSpan(qtyText, 2);
-            grid.Children.Add(qtyText);
+            var qtyDate = BuildFieldRow("Quantity", $"{item.Qty:0.##}", "TicketDate", item.TicketDate == DateTime.MinValue ? "" : item.TicketDate.ToString("dd-MM-yyyy"));
+            Grid.SetRow(qtyDate, 5);
+            root.Children.Add(qtyDate);
 
-            border.Child = grid;
+            border.Child = root;
             return border;
         }
 
-        private static UIElement MakeRow(string left, string right, int row)
+        private static UIElement BuildHeader(PackingCardModel item)
         {
-            var panel = new Grid();
-            panel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            panel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            var leftText = new TextBlock { Text = left, FontSize = 13, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 4) };
-            var rightText = new TextBlock { Text = right, FontSize = 13, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 4) };
-            Grid.SetColumn(rightText, 1);
+            var companyPanel = new StackPanel { Orientation = Orientation.Horizontal };
 
-            panel.Children.Add(leftText);
-            panel.Children.Add(rightText);
+            var logoBox = new Border
+            {
+                Width = 26,
+                Height = 26,
+                Background = Brushes.Black,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            logoBox.Child = new TextBlock
+            {
+                Text = "CH",
+                Foreground = Brushes.White,
+                FontWeight = FontWeights.Black,
+                FontSize = 11,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            companyPanel.Children.Add(logoBox);
 
-            Grid.SetRow(panel, row);
-            Grid.SetColumn(panel, 0);
-            return panel;
+            var namePanel = new StackPanel { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            namePanel.Children.Add(new TextBlock { Text = "CH. RADIATORS CO.,LTD.", FontWeight = FontWeights.Black, FontSize = 12 });
+            namePanel.Children.Add(new TextBlock { Text = "บริษัท ซี.เรเดียเตอร์ จำกัด", FontSize = 9, Foreground = Brushes.Gray });
+            companyPanel.Children.Add(namePanel);
+
+            Grid.SetColumn(companyPanel, 0);
+            grid.Children.Add(companyPanel);
+
+            var qrBorder = new Border
+            {
+                Width = 42,
+                Height = 42,
+                BorderBrush = Brushes.Gray,
+                BorderThickness = new Thickness(1)
+            };
+            qrBorder.Child = new Image { Source = item.QrImage, Stretch = Stretch.Uniform, Margin = new Thickness(2) };
+            Grid.SetColumn(qrBorder, 1);
+            grid.Children.Add(qrBorder);
+
+            return grid;
         }
+
+        // แถวคู่ label/value สองชุดในแถวเดียวกัน (เช่น Bill | Group)
+        private static UIElement BuildFieldRow(string label1, string value1, string label2, string value2)
+        {
+            var grid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var l1 = MakeLabel(label1);
+            Grid.SetColumn(l1, 0);
+            var v1 = MakeValue(value1, new Thickness(4, 0, 10, 0));
+            Grid.SetColumn(v1, 1);
+            var l2 = MakeLabel(label2);
+            Grid.SetColumn(l2, 2);
+            var v2 = MakeValue(value2, new Thickness(4, 0, 0, 0));
+            Grid.SetColumn(v2, 3);
+
+            grid.Children.Add(l1);
+            grid.Children.Add(v1);
+            grid.Children.Add(l2);
+            grid.Children.Add(v2);
+            return grid;
+        }
+
+        // แถว label/value เดี่ยว เต็มแถว (Part Name)
+        private static UIElement BuildSingleFieldRow(string label, string value)
+        {
+            var grid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var l = MakeLabel(label);
+            Grid.SetColumn(l, 0);
+            var v = MakeValue(value, new Thickness(4, 0, 0, 0));
+            v.TextWrapping = TextWrapping.Wrap;
+            Grid.SetColumn(v, 1);
+
+            grid.Children.Add(l);
+            grid.Children.Add(v);
+            return grid;
+        }
+
+        private static TextBlock MakeLabel(string text) => new TextBlock
+        {
+            Text = text,
+            FontSize = 10,
+            FontWeight = FontWeights.Bold,
+            VerticalAlignment = VerticalAlignment.Bottom
+        };
+
+        private static TextBlock MakeValue(string text, Thickness margin) => new TextBlock
+        {
+            Text = text,
+            FontSize = 11,
+            FontWeight = FontWeights.SemiBold,
+            Margin = margin,
+            VerticalAlignment = VerticalAlignment.Bottom
+        };
     }
 }

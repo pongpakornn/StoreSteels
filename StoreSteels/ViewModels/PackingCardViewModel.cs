@@ -88,12 +88,12 @@ namespace StoreSteels.ViewModels
         {
             string kw = (SearchText ?? "").Trim();
 
+            // ค้นหาด้วย Bill No. หรือ Work Order เท่านั้น ตามสเปก
             _filteredItems = string.IsNullOrEmpty(kw)
                 ? _allItems
                 : _allItems.Where(x =>
                     (x.TicketNo?.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                    (x.WorkOrder?.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                    (x.LotNo?.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
+                    (x.WorkOrder?.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
                   ).ToList();
 
             _revealedCount = 0;
@@ -129,5 +129,26 @@ namespace StoreSteels.ViewModels
 
         public List<PackingCardModel> GetSelectedItems()
             => VisibleItems.Where(x => x.IsSelected).ToList();
+
+        // เรียกหลังพิมพ์สำเร็จ: ตัดรายการที่พิมพ์แล้วออกจากลิสต์ทันที (query รอบถัดไปก็จะไม่ดึงมาอยู่แล้ว
+        // เพราะ PackingCardErpService กรองด้วย PackingPrintLog แล้ว แต่ตัดออกจาก UI เลยจะได้ไม่ต้องรอ)
+        public void RemoveItems(IEnumerable<PackingCardModel> items)
+        {
+            if (items == null) return;
+
+            foreach (var item in items.ToList())
+            {
+                VisibleItems.Remove(item);
+                _allItems.Remove(item);
+                _filteredItems.Remove(item);
+
+                if (ReferenceEquals(PreviewItem, item)) PreviewItem = null;
+            }
+
+            _revealedCount = Math.Min(_revealedCount, _filteredItems.Count);
+
+            GroupedItems.Refresh();
+            OnPropertyChanged(nameof(HasMoreToLoad));
+        }
     }
 }

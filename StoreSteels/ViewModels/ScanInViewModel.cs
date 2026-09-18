@@ -405,19 +405,30 @@ namespace StoreSteels.ViewModels
             string rawBarcodeFull = finalSearchCode;
             string uid = CurrentUser.UserId;
 
-            var parts = finalSearchCode.Split(new[] { '|', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            // ✅ รองรับ QR ที่พิมพ์จากหน้า Packing Card (TicketNo | MaterialCode | WorkOrder | LotNo | JobName | Qty)
+            // ให้ค้นหาด้วย MaterialCode และใช้ Qty ตามใบเบิกแทนค่า Pack Size เริ่มต้นของสินค้า
+            bool isPackingCardScan = PackingCardBarcodeParser.TryParse(finalSearchCode, out string packingMaterialCode, out decimal packingQty);
 
-            if (parts.Length > 0)
+            if (isPackingCardScan)
             {
-                string firstChunk = parts[0].Trim();
+                finalSearchCode = packingMaterialCode;
+            }
+            else
+            {
+                var parts = finalSearchCode.Split(new[] { '|', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
 
-                if (firstChunk.Length > 2 && char.IsDigit(firstChunk[0]) && char.IsLetter(firstChunk[1]))
+                if (parts.Length > 0)
                 {
-                    finalSearchCode = firstChunk.Substring(1);
-                }
-                else
-                {
-                    finalSearchCode = firstChunk;
+                    string firstChunk = parts[0].Trim();
+
+                    if (firstChunk.Length > 2 && char.IsDigit(firstChunk[0]) && char.IsLetter(firstChunk[1]))
+                    {
+                        finalSearchCode = firstChunk.Substring(1);
+                    }
+                    else
+                    {
+                        finalSearchCode = firstChunk;
+                    }
                 }
             }
 
@@ -428,7 +439,7 @@ namespace StoreSteels.ViewModels
                     var part = _scanService.GetPartByScan(finalSearchCode);
                     if (part == null) return null;
 
-                    int originalQty = (int)part.Qty;
+                    int originalQty = isPackingCardScan ? (int)packingQty : (int)part.Qty;
 
                     // ⚙️ [เพิ่มเงื่อนไข Test Mode]: ถ้าอยู่ในโหมด Test จะไม่ยิง UpdateStock เข้า DB
                     if (IsTestMode)
