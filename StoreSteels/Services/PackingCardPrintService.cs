@@ -30,8 +30,9 @@ namespace StoreSteels.Services
     {
         private const double MmToPx = 96.0 / 25.4; // WPF ใช้หน่วย 1/96 นิ้ว
         private const double TwipsPerMm = 1440.0 / 25.4; // Document.Length ของ b-PAC ใช้หน่วย 1/1440 นิ้ว
-        private const double RollWidthMm = 62;     // ความกว้างม้วนเทป (ค่าตายตัวของ QL-800)
-        private const double LabelLengthMm = 75.4; // ความยาวป้ายต่อดวง (ปรับได้ตามที่ทดสอบพิมพ์ได้จริง)
+        private const double RollWidthMm = 62;   // ความกว้างม้วนเทป (ค่าตายตัวของ QL-800)
+        private const double LabelLengthMm = 40; // ความยาวป้ายต่อดวง - ตรงกับค่า "ความยาว" ที่ตั้งไว้ใน
+                                                  // P-touch Editor ตอนออกแบบเทมเพลต (สื่อ 62mm x ยาว 40mm)
 
         // ขนาด Visual ที่จะวาดจริง (fallback path) = ขนาดหลังหมุนเป็นแนวนอนแล้ว (ยาว x กว้าง)
         private const double CardWidth = LabelLengthMm * MmToPx;
