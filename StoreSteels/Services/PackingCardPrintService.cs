@@ -1,28 +1,44 @@
 using StoreSteels.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Printing;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace StoreSteels.Services
 {
-    // สร้าง Visual การ์ด Packing แล้วสั่งพิมพ์ทีละใบผ่าน PrintDialog/PrintVisual ของ WPF เอง
-    // (โปรเจกต์นี้ยังไม่มี Print service กลางมาก่อน จึงสร้างใหม่โดยใช้กลไกมาตรฐานของ WPF)
-    // ขนาดกระดาษ: เครื่องพิมพ์ Brother QL-800 ม้วนเทปต่อเนื่องกว้าง 62mm (ค่าตายตัวของม้วน) x ความยาว 75.4mm
-    // (ค่าที่ทดสอบพิมพ์ได้จริงจาก Printing Preferences ของไดรเวอร์ - ใส่ Width/Height สลับกับที่เคยลอง
-    //  70x62 ตรงๆ แล้วขึ้น error "ม้วนสติกเกอร์ไม่ตรงกับที่เลือกใช้ในแอปพลิเคชัน" เพราะ PageMediaSize ต้อง
-    //  เป็นขนาด "ฐาน" ของม้วน (กว้าง 62 x ยาว 75.4) แล้วค่อยสั่ง PageOrientation.Landscape ให้มันหมุนตอนพิมพ์)
+    // พิมพ์ Packing Card สองทาง:
+    //
+    // 1) Brother b-PAC SDK (COM) - ทางที่ดีที่สุด ไม่มี popup เตือน "ม้วนฉลากไม่ตรงกับที่เลือกไว้ใน
+    //    แอปพลิเคชัน" เพราะพิมพ์ผ่าน COM ของ Brother ตรงๆ ไม่ผ่าน Print Spooler แบบ GDI ของ .NET
+    //    แต่ "บังคับ" ต้องมีไฟล์ label template (Assets/Labels/PackingCard.lbx) ที่สร้างด้วยโปรแกรม
+    //    Brother P-touch Editor ไว้ก่อน (b-PAC ไม่รองรับการสร้าง/แก้ไข layout จากโค้ดเลยตามสเปกของ
+    //    Brother เอง) - ดูขั้นตอนสร้างไฟล์นี้ในคอมเมนต์เหนือ PrintViaBpac() ด้านล่าง
+    //
+    // 2) WPF PrintDialog/PrintVisual (fallback) - ใช้เมื่อยังไม่มีไฟล์ template ข้อ 1 เพื่อให้ "พิมพ์ได้
+    //    เหมือนเดิม" ก่อน ไม่ต้องรอสร้าง .lbx ก่อนถึงจะใช้งานได้ ข้อเสียคือไดรเวอร์ QL-800 อาจเด้ง popup
+    //    เตือน "ม้วนฉลากหรือเทปภายในเครื่องไม่ตรงกับที่เลือกไว้ในแอปพลิเคชัน" ให้กด "ดำเนินการต่อ" เอง
+    //    ทุกครั้งที่พิมพ์ (ไม่ block การพิมพ์ แค่ต้องกดยืนยันเพิ่ม) เพราะ .NET ส่งขนาดกระดาษ custom ผ่าน
+    //    Print Spooler แบบ GDI ซึ่งไดรเวอร์ label ของ Brother ไม่รู้จักเป็น preset ที่ถูกต้อง
+    //
+    // สรุป: มีไฟล์ template แล้ว -> ใช้ b-PAC (ลื่นสุด) / ยังไม่มี -> fallback มาใช้ PrintVisual (พิมพ์ได้
+    // ทันทีเหมือนก่อนหน้านี้ แค่ต้องกดยืนยัน popup ของไดรเวอร์เอง)
     public class PackingCardPrintService
     {
-        private const double MmToPx = 96.0 / 25.4; // WPF/PrintTicket ใช้หน่วย 1/96 นิ้ว
-        private const double RollWidthMm = 62;    // ความกว้างม้วนเทป (ค่าตายตัวของ QL-800)
+        private const double MmToPx = 96.0 / 25.4; // WPF ใช้หน่วย 1/96 นิ้ว
+        private const double TwipsPerMm = 1440.0 / 25.4; // Document.Length ของ b-PAC ใช้หน่วย 1/1440 นิ้ว
+        private const double RollWidthMm = 62;     // ความกว้างม้วนเทป (ค่าตายตัวของ QL-800)
         private const double LabelLengthMm = 75.4; // ความยาวป้ายต่อดวง (ปรับได้ตามที่ทดสอบพิมพ์ได้จริง)
 
-        // ขนาด Visual ที่จะวาดจริง = ขนาดหลังหมุนเป็นแนวนอนแล้ว (ยาว x กว้าง)
+        // ขนาด Visual ที่จะวาดจริง (fallback path) = ขนาดหลังหมุนเป็นแนวนอนแล้ว (ยาว x กว้าง)
         private const double CardWidth = LabelLengthMm * MmToPx;
         private const double CardHeight = RollWidthMm * MmToPx;
+
+        private static readonly string TemplatePath =
+            Path.Combine(AppContext.BaseDirectory, "Assets", "Labels", "PackingCard.lbx");
 
         // คืนรายการที่พิมพ์สำเร็จจริง (เรียงตามลำดับที่พิมพ์) - onProgress แจ้งความคืบหน้าจริงทีละใบ
         public List<PackingCardModel> PrintCards(IList<PackingCardModel> items, Action<int, int> onProgress = null)
@@ -33,10 +49,106 @@ namespace StoreSteels.Services
             var printDialog = new PrintDialog();
             if (printDialog.ShowDialog() != true) return printed;
 
+            return File.Exists(TemplatePath)
+                ? PrintViaBpac(printDialog, items, onProgress)
+                : PrintViaPrintVisual(printDialog, items, onProgress);
+        }
+
+        // ================================================================================
+        // ทางที่ 1: Brother b-PAC SDK
+        //
+        // === ขั้นตอนสร้างไฟล์ label template (ทำครั้งเดียวต่อเครื่อง เมื่อพร้อมเปลี่ยนมาใช้ทางนี้) ===
+        // 1) เปิด Brother P-touch Editor > เลือกเครื่องพิมพ์ Brother QL-800 > ม้วนเทปต่อเนื่อง 62mm
+        // 2) สร้าง Text object ตั้งชื่อให้ตรงเป๊ะ (คลิกขวา object > Properties > Name):
+        //      TicketNo, GroupCode, WorkOrder, LotNo, JobName, Qty, TicketDate
+        // 3) สร้าง Barcode object ชื่อ "QrCode" ประเภท Protocol = QR Code วางไว้มุมขวาบน
+        // 4) ป้ายกำกับ/โลโก้อื่นๆ (หัวบริษัท, "Bill:", "Group:" ฯลฯ) พิมพ์เป็นข้อความนิ่งได้เลย ไม่ต้องตั้งชื่อ
+        // 5) Save As เป็นไฟล์ที่ Assets/Labels/PackingCard.lbx (สร้างโฟลเดอร์ถ้ายังไม่มี - ตั้ง copy ไป
+        //    output อัตโนมัติแล้วใน StoreSteels.csproj)
+        // ================================================================================
+        private List<PackingCardModel> PrintViaBpac(PrintDialog printDialog, IList<PackingCardModel> items, Action<int, int> onProgress)
+        {
+            var printed = new List<PackingCardModel>();
+            string printerName = printDialog.PrintQueue?.Name;
+
+            bpac.Document doc = new bpac.DocumentClass();
+            try
+            {
+                if (!doc.Open(TemplatePath))
+                {
+                    throw new InvalidOperationException(
+                        $"เปิด Packing Card template ไม่สำเร็จ (b-PAC ErrorCode={doc.ErrorCode}): {TemplatePath}");
+                }
+
+                if (!string.IsNullOrEmpty(printerName))
+                {
+                    doc.SetPrinter(printerName, false);
+                }
+
+                doc.Length = (int)Math.Round(LabelLengthMm * TwipsPerMm);
+
+                int qrIndex = doc.GetBarcodeIndex("QrCode");
+
+                for (int i = 0; i < items.Count; i++)
+                {
+                    var item = items[i];
+                    ApplyFields(doc, item, qrIndex);
+
+                    doc.StartPrint("", bpac.PrintOptionConstants.bpoDefault);
+                    doc.PrintOut(1, bpac.PrintOptionConstants.bpoDefault);
+                    doc.EndPrint();
+
+                    printed.Add(item);
+                    onProgress?.Invoke(printed.Count, items.Count);
+                }
+            }
+            finally
+            {
+                doc.Close();
+                Marshal.ReleaseComObject(doc);
+            }
+
+            return printed;
+        }
+
+        private static void ApplyFields(bpac.Document doc, PackingCardModel item, int qrIndex)
+        {
+            SetText(doc, "TicketNo", item.TicketNo);
+            SetText(doc, "GroupCode", item.GroupCode);
+            SetText(doc, "WorkOrder", item.WorkOrder);
+            SetText(doc, "LotNo", item.LotNo);
+            SetText(doc, "JobName", item.JobName);
+            SetText(doc, "Qty", item.Qty.ToString("0.##"));
+            SetText(doc, "TicketDate", item.TicketDate == DateTime.MinValue ? "" : item.TicketDate.ToString("dd-MM-yyyy"));
+
+            // Object.Text ใช้ตั้งค่าได้เฉพาะ object ประเภทข้อความ (bobText) เท่านั้น - barcode/QR ต้อง
+            // ตั้งผ่าน Document.SetBarcodeData(index, data) โดยเฉพาะตามสเปกของ b-PAC
+            if (qrIndex >= 0)
+            {
+                doc.SetBarcodeData(qrIndex, item.QrText ?? "");
+            }
+        }
+
+        // GetObject คืนค่า null ถ้าไม่เจอ object ชื่อนั้นในเทมเพลต (เช่น template ยังสร้างไม่ครบ) -
+        // ข้ามเงียบๆ แทนที่จะพัง เพื่อให้ยังพิมพ์ field อื่นที่มีอยู่ได้ตามปกติ
+        private static void SetText(bpac.Document doc, string objectName, string value)
+        {
+            var obj = doc.GetObject(objectName);
+            if (obj != null) obj.Text = value ?? "";
+        }
+
+        // ================================================================================
+        // ทางที่ 2: WPF PrintVisual (fallback ตอนยังไม่มีไฟล์ .lbx) - พิมพ์ได้ทันทีเหมือนเดิม
+        // ================================================================================
+        private List<PackingCardModel> PrintViaPrintVisual(PrintDialog printDialog, IList<PackingCardModel> items, Action<int, int> onProgress)
+        {
+            var printed = new List<PackingCardModel>();
+
             try
             {
                 // PageMediaSize ต้องใส่เป็นขนาด "ฐาน" ของม้วน (กว้าง=62mm คงที่, ยาว=75.4mm) ไม่ใช่ขนาด
-                // หลังหมุนแล้ว - แล้วให้ PageOrientation เป็นตัวหมุนแสดงผลเป็นแนวนอนแทน
+                // หลังหมุนแล้ว - แล้วให้ PageOrientation เป็นตัวหมุนแสดงผลเป็นแนวนอนแทน (ไดรเวอร์บางรุ่น
+                // อาจยังเด้ง popup เตือนม้วนฉลากไม่ตรง ให้กด "ดำเนินการต่อ" เอง - ไม่ block การพิมพ์)
                 printDialog.PrintTicket.PageMediaSize = new PageMediaSize(RollWidthMm * MmToPx, LabelLengthMm * MmToPx);
                 printDialog.PrintTicket.PageOrientation = PageOrientation.Landscape;
             }
