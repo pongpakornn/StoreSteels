@@ -72,8 +72,14 @@ namespace StoreSteels.Services
             if (!File.Exists(TemplatePath))
             {
                 throw new InvalidOperationException(
-                    "ไม่พบไฟล์ label template: " + TemplatePath +
-                    " กรุณาสร้างไฟล์นี้ด้วย Brother P-touch Editor ก่อน (ดูขั้นตอนในคอมเมนต์ต้นไฟล์ PackingCardPrintService.cs)");
+                    "ไม่พบไฟล์ label template: " + TemplatePath + Environment.NewLine + Environment.NewLine +
+                    "ต้องสร้างไฟล์นี้ด้วย Brother P-touch Editor ก่อน (b-PAC ไม่รองรับการสร้าง layout จากโค้ด):" + Environment.NewLine +
+                    "1. เปิด P-touch Editor > เลือกเครื่องพิมพ์ Brother QL-800 > ม้วนเทปต่อเนื่อง 62mm" + Environment.NewLine +
+                    "2. สร้าง Text object ตั้งชื่อให้ตรงเป๊ะ: TicketNo, GroupCode, WorkOrder, LotNo, JobName, Qty, TicketDate" + Environment.NewLine +
+                    "3. สร้าง Barcode object ชื่อ QrCode ประเภท Protocol = QR Code" + Environment.NewLine +
+                    "4. ป้ายกำกับ/โลโก้อื่นๆ พิมพ์เป็นข้อความนิ่งได้เลย ไม่ต้องตั้งชื่อ" + Environment.NewLine +
+                    "5. Save As เป็นไฟล์ที่: " + TemplatePath + Environment.NewLine + Environment.NewLine +
+                    "(รายละเอียดเพิ่มเติมในคอมเมนต์ต้นไฟล์ PackingCardPrintService.cs)");
             }
 
             // ใช้ PrintDialog ของ WPF แค่ "เลือกเครื่องพิมพ์ + ให้กด Cancel ได้" เหมือนของเดิม
