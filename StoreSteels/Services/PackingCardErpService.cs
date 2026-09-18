@@ -9,27 +9,26 @@ using System.Linq;
 namespace StoreSteels.Services
 {
     // อ่านข้อมูลจาก ERP (CHR) โดยตรงแบบ Read-only เพื่อเอามาแสดง/ปริ้น Packing Card เฉยๆ
-    // ไม่มีการเขียน/แก้ไขข้อมูลกลับเข้า ERP หรือสร้างตาราง queue ใดๆ ฝั่ง Stock DB
+    // ไม่มีการเขียน/แก้ไขข้อมูลกลับเข้า ERP เด็ดขาด
     public class PackingCardErpService
     {
         private readonly string _erpConnStr = GlobalConfig.ErpConnStr;
-        private readonly IScannerLogLookupService _scannerLogLookup;
+        private readonly PackingPrintLogService _printLogService;
 
-        public PackingCardErpService(IScannerLogLookupService scannerLogLookup = null)
+        public PackingCardErpService(PackingPrintLogService printLogService = null)
         {
-            _scannerLogLookup = scannerLogLookup ?? new ScannerLogLookupService();
+            _printLogService = printLogService ?? new PackingPrintLogService();
         }
 
         public List<PackingCardModel> GetPendingPackingCards()
         {
             var list = new List<PackingCardModel>();
 
-            // FGDCODE = คลัง (Group) ใช้จัดกลุ่มแถวในตาราง
             const string sql = @"
                 SELECT
                     src.FTRNNO       AS TicketNo,
                     src.FITEMNO      AS ItemNo,
-                    src.FGDCODE      AS GroupCode,
+                    src.FGDCODE      AS Warehouse,
                     src.FLOTNO       AS LotNo,
                     src.FPDCODE      AS MaterialCode,
                     src.FWONO        AS WorkOrder,
@@ -39,10 +38,14 @@ namespace StoreSteels.Services
                 FROM dbo.SD11ICTR src
                 WHERE src.FTRNYEAR = YEAR(GETDATE())
                   AND src.FMOVECODE = 42
-                  AND src.FMDATE >= DATEADD(DAY, -1, CAST(GETDATE() AS DATE))
+                  AND src.FMDATE >= DATEADD(DAY, -2, CAST(GETDATE() AS DATE))
                   AND src.FPDCODE NOT LIKE 'B%'
-                ORDER BY src.FGDCODE, src.FMDATE DESC";
+                ORDER BY src.FMDATE DESC, src.FTRNNO, src.FITEMNO";
 
+            // หมายเหตุ: เดิมสเปกให้ทำ NOT EXISTS (...dbo.PackingPrintLog...) ในคิวรีนี้เลย แต่ทำไม่ได้จริง
+            // เพราะ ERP (192.168.10.10) กับ Stock DB คนละเครื่องกัน การ query ข้ามเซิร์ฟเวอร์แบบนี้ต้อง
+            // ตั้ง Linked Server ก่อนซึ่งยังไม่มี จึงกรองรายการที่พิมพ์ไปแล้วออกด้วยโค้ดฝั่งแอปแทน (ผลลัพธ์
+            // เหมือนกันทุกประการ) ผ่าน PackingPrintLogService.GetPrintedKeys() ด้านล่าง
             using (var conn = new SqlConnection(_erpConnStr))
             using (var cmd = new SqlCommand(sql, conn))
             {
@@ -51,7 +54,7 @@ namespace StoreSteels.Services
                 {
                     int ordTicketNo = rdr.GetOrdinal("TicketNo");
                     int ordItemNo = rdr.GetOrdinal("ItemNo");
-                    int ordGroupCode = rdr.GetOrdinal("GroupCode");
+                    int ordWarehouse = rdr.GetOrdinal("Warehouse");
                     int ordLotNo = rdr.GetOrdinal("LotNo");
                     int ordMaterialCode = rdr.GetOrdinal("MaterialCode");
                     int ordWorkOrder = rdr.GetOrdinal("WorkOrder");
@@ -60,14 +63,14 @@ namespace StoreSteels.Services
                     int ordQty = rdr.GetOrdinal("Qty");
 
                     // ภายใต้ SequentialAccess ต้องอ่านแต่ละคอลัมน์ "ครั้งเดียว" และเรียงตาม ordinal จากน้อยไปมาก
-                    // (เช็ค IsDBNull ก่อน ค่อยอ่านค่า - ห้ามอ่านคอลัมน์เดิมซ้ำสองครั้งแบบเดิมที่ใช้ rdr["Col"] ในทั้งเงื่อนไขและค่า)
+                    // (เช็ค IsDBNull ก่อน ค่อยอ่านค่า - ห้ามอ่านคอลัมน์เดิมซ้ำสองครั้งแบบ rdr["Col"] ในทั้งเงื่อนไขและค่า)
                     while (rdr.Read())
                     {
                         list.Add(new PackingCardModel
                         {
                             TicketNo = rdr.IsDBNull(ordTicketNo) ? "" : rdr.GetString(ordTicketNo).Trim(),
                             ItemNo = rdr.IsDBNull(ordItemNo) ? "" : rdr.GetString(ordItemNo).Trim(),
-                            GroupCode = rdr.IsDBNull(ordGroupCode) ? "" : rdr.GetString(ordGroupCode).Trim(),
+                            GroupCode = rdr.IsDBNull(ordWarehouse) ? "" : rdr.GetString(ordWarehouse).Trim(),
                             LotNo = rdr.IsDBNull(ordLotNo) ? "" : rdr.GetString(ordLotNo).Trim(),
                             MaterialCode = rdr.IsDBNull(ordMaterialCode) ? "" : rdr.GetString(ordMaterialCode).Trim(),
                             WorkOrder = rdr.IsDBNull(ordWorkOrder) ? "" : rdr.GetString(ordWorkOrder).Trim(),
@@ -81,8 +84,8 @@ namespace StoreSteels.Services
                 }
             }
 
-            // กรองรายการที่ถูกสแกนไปแล้วออก โดยเทียบกับ TRN_SCAN.REF_NO ของระบบ MULTI-SCAN (IN/OUT) เดิม
-            return list.Where(x => !_scannerLogLookup.IsAlreadyScanned(x.TicketNo, x.LotNo)).ToList();
+            var printedKeys = _printLogService.GetPrintedKeys();
+            return list.Where(x => !printedKeys.Contains(PackingPrintLogService.MakeKey(x.TicketNo, x.ItemNo))).ToList();
         }
     }
 }

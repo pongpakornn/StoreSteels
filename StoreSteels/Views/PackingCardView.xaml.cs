@@ -17,6 +17,7 @@ namespace StoreSteels.Views
     {
         private readonly PackingCardViewModel _viewModel;
         private readonly PackingCardPrintService _printService = new PackingCardPrintService();
+        private readonly PackingPrintLogService _printLogService = new PackingPrintLogService();
 
         public PackingCardView(UserSession session)
         {
@@ -77,6 +78,15 @@ namespace StoreSteels.Views
             UpdateItemCountText();
         }
 
+        private void dgPackingCards_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // คลิกแถวไหน (ไม่ต้องติ๊ก checkbox) ให้ไปพรีวิวการ์ดฝั่งขวาทันที
+            if (dgPackingCards.SelectedItem is PackingCardModel item)
+            {
+                _viewModel.PreviewItem = item;
+            }
+        }
+
         private void dgPackingCards_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             // Infinite scroll: โหลดเพิ่มทีละ 10 แถวเมื่อเลื่อนใกล้สุดล่าง กันข้อมูลเยอะแล้วเครื่องค้าง
@@ -85,15 +95,6 @@ namespace StoreSteels.Views
             if (e.VerticalOffset + e.ViewportHeight >= e.ExtentHeight - 40)
             {
                 _viewModel.LoadMore();
-            }
-        }
-
-        private void PrintSingle_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.DataContext is PackingCardModel item)
-            {
-                _viewModel.PreviewItem = item;
-                RunPrintFlow(new List<PackingCardModel> { item });
             }
         }
 
@@ -121,7 +122,7 @@ namespace StoreSteels.Views
 
             try
             {
-                int printed = _printService.PrintCards(items, (current, total) =>
+                var printedItems = _printService.PrintCards(items, (current, total) =>
                 {
                     progressView.UpdateProgress(current, total);
                     // ปั๊มข้อความ UI ให้หลอดโปรเกรสขยับจริงระหว่างพิมพ์ทีละใบ (loop นี้ทำงานบน UI thread)
@@ -129,14 +130,19 @@ namespace StoreSteels.Views
                 });
 
                 string userId = _viewModel.CurrentUser?.UserId ?? "Unknown";
-                foreach (var item in items)
+                foreach (var item in printedItems)
                 {
+                    // บันทึกประวัติการพิมพ์ลง PackingPrintLog (ฐานของเราเอง) - รอบถัดไป ERP query
+                    // จะไม่ดึงรายการนี้กลับมาอีก และตัดออกจากลิสต์ที่แสดงอยู่ทันทีด้านล่าง
+                    _printLogService.LogPrinted(item, userId);
                     LogService.WriteLog(userId, "PRINT_PACKING_CARD", $"Printed Packing Card | Ticket: {item.TicketNo} | Lot: {item.LotNo}", item.MaterialCode);
                 }
 
-                if (printed > 0)
+                if (printedItems.Count > 0)
                 {
-                    DialogHelper.ShowSuccess($"พิมพ์ Packing Card สำเร็จ {printed} ใบ");
+                    _viewModel.RemoveItems(printedItems);
+                    UpdateItemCountText();
+                    DialogHelper.ShowSuccess($"พิมพ์ Packing Card สำเร็จ {printedItems.Count} ใบ");
                 }
             }
             catch (Exception ex)

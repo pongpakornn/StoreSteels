@@ -143,7 +143,7 @@
 
                 <Border Grid.Column="0" Background="{StaticResource SoftGray}" CornerRadius="15" Padding="15" Margin="0,0,10,0">
                     <StackPanel VerticalAlignment="Top">
-                        <TextBlock Text="ค้นหา (Bill No / Work Order / Lot)" FontSize="13" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,8"/>
+                        <TextBlock Text="ค้นหา (Bill No / Work Order)" FontSize="13" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,8"/>
                         <TextBox x:Name="txtSearch" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}"
                                  Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
                         <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
@@ -153,15 +153,19 @@
                     </StackPanel>
                 </Border>
 
+                <!-- พรีวิวการ์ด: เลย์เอาต์ตามการ์ดตัวอย่าง (โลโก้+ชื่อบริษัท / QR มุมขวาบน / ฟิลด์คู่ Bill-Group,
+                     Work Order-Lot No. / Part Name เต็มแถว / Quantity-TicketDate) - ไม่มีข้อมูลตอนยังไม่เลือกแถว -->
                 <Border Grid.Column="1" Background="{StaticResource SoftGray}" CornerRadius="15" Padding="18" Margin="10,0,0,0">
-                    <StackPanel DataContext="{Binding PreviewItem}">
+                    <StackPanel>
                         <TextBlock Text="ตัวอย่างสติ๊กเกอร์ / ป้ายแพ็ค" FontSize="13" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,10"/>
 
-                        <Border Background="White" CornerRadius="10" BorderBrush="#EEE" BorderThickness="1.5" Padding="14">
+                        <Border Background="White" CornerRadius="10" BorderBrush="#EEE" BorderThickness="1.5" Padding="16" DataContext="{Binding PreviewItem}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -169,36 +173,60 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding TicketNo, TargetNullValue='-'}" FontSize="20" FontWeight="Black" Foreground="{StaticResource DeepDark}" Margin="0,0,0,6"/>
-
-                                <Image Grid.Row="0" Grid.RowSpan="3" Grid.Column="1" Width="80" Height="80" Source="{Binding QrImage}" VerticalAlignment="Top"/>
-
-                                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,4">
-                                    <TextBlock FontSize="12" FontWeight="SemiBold">
-                                        <Run Text="Group: "/><Run Text="{Binding GroupCode}"/>
-                                    </TextBlock>
-                                    <TextBlock FontSize="12" FontWeight="SemiBold" Margin="15,0,0,0">
-                                        <Run Text="Work Order: "/><Run Text="{Binding WorkOrder}"/>
-                                    </TextBlock>
+                                <!-- หัวการ์ด: โลโก้ + ชื่อบริษัท (ซ้าย), QR Code (ขวา) -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal">
+                                    <Border Width="34" Height="34" Background="{StaticResource DeepDark}">
+                                        <TextBlock Text="CH" Foreground="White" FontWeight="Black" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="CH. RADIATORS CO.,LTD." FontWeight="Black" FontSize="14"/>
+                                        <TextBlock Text="บริษัท ซี.เรเดียเตอร์ จำกัด" FontSize="11" Foreground="#777"/>
+                                    </StackPanel>
                                 </StackPanel>
+                                <Border Grid.Row="0" Grid.Column="3" Width="48" Height="48" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right">
+                                    <Image Source="{Binding QrImage}" Stretch="Uniform" Margin="2"/>
+                                </Border>
 
-                                <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,4">
-                                    <TextBlock FontSize="12" FontWeight="SemiBold">
-                                        <Run Text="Lot No: "/><Run Text="{Binding LotNo}"/>
-                                    </TextBlock>
-                                    <TextBlock FontSize="12" FontWeight="SemiBold" Margin="15,0,0,0">
-                                        <Run Text="Material: "/><Run Text="{Binding MaterialCode}"/>
-                                    </TextBlock>
-                                </StackPanel>
+                                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Height="1" Background="#E0E0E0" Margin="0,10,0,10"/>
 
-                                <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding JobName}" FontSize="13" FontWeight="Bold" TextWrapping="Wrap" Margin="0,4,0,4"/>
+                                <!-- Bill | Group -->
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Bill" FontSize="12" FontWeight="Bold" VerticalAlignment="Bottom" Margin="0,0,8,4"/>
+                                <Border Grid.Row="2" Grid.Column="1" BorderBrush="#AAA" BorderThickness="0,0,0,1" Margin="0,0,14,4">
+                                    <TextBlock Text="{Binding TicketNo}" FontSize="12" FontWeight="SemiBold" Padding="0,0,0,2"/>
+                                </Border>
+                                <TextBlock Grid.Row="2" Grid.Column="2" Text="Group" FontSize="12" FontWeight="Bold" VerticalAlignment="Bottom" Margin="0,0,8,4"/>
+                                <Border Grid.Row="2" Grid.Column="3" BorderBrush="#AAA" BorderThickness="0,0,0,1" Margin="0,0,0,4">
+                                    <TextBlock Text="{Binding GroupCode}" FontSize="12" FontWeight="SemiBold" Padding="0,0,0,2"/>
+                                </Border>
 
-                                <!-- ไม่แสดง TicketDate บนการ์ด (ใช้แค่ตอนกำหนดช่วงข้อมูลที่ดึงมาแสดงเท่านั้น) -->
-                                <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" FontSize="13" FontWeight="Bold">
-                                    <Run Text="Quantity: "/><Run Text="{Binding Qty, StringFormat='{}{0:0.##}'}"/>
-                                </TextBlock>
+                                <!-- Work Order | LOT NO. -->
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Work Order" FontSize="12" FontWeight="Bold" VerticalAlignment="Bottom" Margin="0,0,8,4"/>
+                                <Border Grid.Row="3" Grid.Column="1" BorderBrush="#AAA" BorderThickness="0,0,0,1" Margin="0,0,14,4">
+                                    <TextBlock Text="{Binding WorkOrder}" FontSize="12" FontWeight="SemiBold" Padding="0,0,0,2"/>
+                                </Border>
+                                <TextBlock Grid.Row="3" Grid.Column="2" Text="LOT NO." FontSize="12" FontWeight="Bold" VerticalAlignment="Bottom" Margin="0,0,8,4"/>
+                                <Border Grid.Row="3" Grid.Column="3" BorderBrush="#AAA" BorderThickness="0,0,0,1" Margin="0,0,0,4">
+                                    <TextBlock Text="{Binding LotNo}" FontSize="12" FontWeight="SemiBold" Padding="0,0,0,2"/>
+                                </Border>
+
+                                <!-- Part Name เต็มแถว -->
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Part Name" FontSize="12" FontWeight="Bold" VerticalAlignment="Bottom" Margin="0,0,8,4"/>
+                                <Border Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" BorderBrush="#AAA" BorderThickness="0,0,0,1" Margin="0,0,0,4">
+                                    <TextBlock Text="{Binding JobName}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" Padding="0,0,0,2"/>
+                                </Border>
+
+                                <!-- Quantity | TicketDate -->
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Quantity" FontSize="12" FontWeight="Bold" VerticalAlignment="Bottom" Margin="0,0,8,0"/>
+                                <Border Grid.Row="5" Grid.Column="1" BorderBrush="#AAA" BorderThickness="0,0,0,1" Margin="0,0,14,0">
+                                    <TextBlock Text="{Binding Qty, StringFormat='{}{0:0.##}'}" FontSize="12" FontWeight="SemiBold" Padding="0,0,0,2"/>
+                                </Border>
+                                <TextBlock Grid.Row="5" Grid.Column="2" Text="TicketDate" FontSize="12" FontWeight="Bold" VerticalAlignment="Bottom" Margin="0,0,8,0"/>
+                                <Border Grid.Row="5" Grid.Column="3" BorderBrush="#AAA" BorderThickness="0,0,0,1" Margin="0,0,0,0">
+                                    <TextBlock Text="{Binding TicketDate, StringFormat='dd-MM-yyyy'}" FontSize="12" FontWeight="SemiBold" Padding="0,0,0,2"/>
+                                </Border>
                             </Grid>
                         </Border>
                     </StackPanel>
@@ -222,15 +250,17 @@
                           EnableColumnVirtualization="False"
                           VirtualizingStackPanel.IsVirtualizing="True"
                           VirtualizingStackPanel.VirtualizationMode="Recycling"
-                          HorizontalScrollBarVisibility="Disabled"
+                          HorizontalScrollBarVisibility="Auto"
                           ScrollViewer.CanContentScroll="True"
                           ScrollViewer.ScrollChanged="dgPackingCards_ScrollChanged"
                           ItemsSource="{Binding GroupedItems}"
+                          SelectionMode="Extended" SelectionUnit="FullRow"
+                          SelectionChanged="dgPackingCards_SelectionChanged"
                           HeadersVisibility="Column" IsReadOnly="True"
                           AutoGenerateColumns="False"
                           Background="Transparent"
                           BorderThickness="0"
-                          RowHeight="55"
+                          RowHeight="48"
                           FontSize="13"
                           FontWeight="Bold"
                           CellStyle="{StaticResource CenterCellStyle}"
@@ -273,27 +303,13 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="TICKET NO" Binding="{Binding TicketNo}" Width="1.2*"/>
-                        <DataGridTextColumn Header="GROUP" Binding="{Binding GroupCode}" Width="0.8*"/>
-                        <DataGridTextColumn Header="MATERIAL CODE" Binding="{Binding MaterialCode}" Width="1.2*"/>
-                        <DataGridTextColumn Header="WORK ORDER" Binding="{Binding WorkOrder}" Width="1.2*"/>
-                        <DataGridTextColumn Header="LOT NO" Binding="{Binding LotNo}" Width="1*"/>
-                        <DataGridTextColumn Header="PART NAME" Binding="{Binding JobName}" Width="2*"/>
-                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty, StringFormat='{}{0:0.##}'}" Width="0.7*"/>
-                        <DataGridTextColumn Header="TICKET DATE" Binding="{Binding TicketDate, StringFormat='dd-MM-yyyy'}" Width="1*"/>
-
-                        <DataGridTemplateColumn Header="ACTION" Width="90">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="PRINT"
-                                            Style="{StaticResource CyberButton}"
-                                            Background="{StaticResource CyberPink}"
-                                            Foreground="{StaticResource DeepDark}" FontWeight="Black"
-                                            Height="28" Width="65" FontSize="11"
-                                            Click="PrintSingle_Click"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="BILL NO." Binding="{Binding TicketNo}" Width="1.3*"/>
+                        <DataGridTextColumn Header="GROUP" Binding="{Binding GroupCode}" Width="0.7*"/>
+                        <DataGridTextColumn Header="PD CODE" Binding="{Binding MaterialCode}" Width="1.1*"/>
+                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty, StringFormat='{}{0:0.##}'}" Width="0.6*"/>
+                        <DataGridTextColumn Header="WORKORDER" Binding="{Binding WorkOrder}" Width="1.3*"/>
+                        <DataGridTextColumn Header="LOT" Binding="{Binding LotNo}" Width="0.9*"/>
+                        <DataGridTextColumn Header="REMARK" Binding="{Binding JobName}" Width="2.2*"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
