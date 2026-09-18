@@ -33,4 +33,36 @@
     <Resource Include="Assets\**\*.png;Assets\**\*.gif;Assets\**\*.ico" />
   </ItemGroup>
 
+  <!--
+      PackingCard.lbx is a Brother b-PAC label template, opened at runtime via a real file path
+      (bpac.Document.Open() takes a filesystem path/URL, not a pack-URI resource stream), so it
+      ships as plain Content copied next to the exe rather than an embedded WPF Resource.
+  -->
+  <ItemGroup>
+    <None Include="Assets\Labels\PackingCard.lbx" Condition="Exists('Assets\Labels\PackingCard.lbx')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!--
+      Interop assembly for the Brother b-PAC 3.4 Type Library (bpac.dll), used by
+      Services/PackingCardPrintService.cs to print Packing Card labels through Brother's official
+      label-printing COM API instead of the WPF PrintDialog/PrintVisual + PrintTicket.PageMediaSize
+      path, which the QL-800 driver rejects as an unrecognized preset and warns about on every print.
+
+      This is a plain assembly reference (Libs\Interop.bpac.dll) rather than a <COMReference>: the
+      SDK-style `dotnet build`/CLI MSBuild does not support the ResolveComReference task at all
+      ("MSB4803: not supported on the .NET Core version of MSBuild") - only Visual Studio's bundled
+      Full Framework MSBuild does - so a <COMReference> here would build in the IDE but fail on any
+      CLI/CI build. Libs\Interop.bpac.dll was pre-generated once with the Windows SDK's TlbImp.exe
+      against this machine's registered bpac.dll (see setup steps in PackingCardPrintService.cs) and
+      is committed to the repo so no machine-specific COM interop generation step is needed to build.
+  -->
+  <ItemGroup>
+    <Reference Include="Interop.bpac">
+      <HintPath>Libs\Interop.bpac.dll</HintPath>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+    </Reference>
+  </ItemGroup>
+
 </Project>
