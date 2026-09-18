@@ -10,14 +10,19 @@ namespace StoreSteels.Services
 {
     // สร้าง Visual การ์ด Packing แล้วสั่งพิมพ์ทีละใบผ่าน PrintDialog/PrintVisual ของ WPF เอง
     // (โปรเจกต์นี้ยังไม่มี Print service กลางมาก่อน จึงสร้างใหม่โดยใช้กลไกมาตรฐานของ WPF)
-    // ขนาดกระดาษ: เครื่องพิมพ์ Brother QL-800 ป้ายฉลากม้วนต่อเนื่อง สูง 62mm x กว้าง(แนวนอน) 70mm
+    // ขนาดกระดาษ: เครื่องพิมพ์ Brother QL-800 ม้วนเทปต่อเนื่องกว้าง 62mm (ค่าตายตัวของม้วน) x ความยาว 75.4mm
+    // (ค่าที่ทดสอบพิมพ์ได้จริงจาก Printing Preferences ของไดรเวอร์ - ใส่ Width/Height สลับกับที่เคยลอง
+    //  70x62 ตรงๆ แล้วขึ้น error "ม้วนสติกเกอร์ไม่ตรงกับที่เลือกใช้ในแอปพลิเคชัน" เพราะ PageMediaSize ต้อง
+    //  เป็นขนาด "ฐาน" ของม้วน (กว้าง 62 x ยาว 75.4) แล้วค่อยสั่ง PageOrientation.Landscape ให้มันหมุนตอนพิมพ์)
     public class PackingCardPrintService
     {
         private const double MmToPx = 96.0 / 25.4; // WPF/PrintTicket ใช้หน่วย 1/96 นิ้ว
-        private const double LabelWidthMm = 70;
-        private const double LabelHeightMm = 62;
-        private const double CardWidth = LabelWidthMm * MmToPx;
-        private const double CardHeight = LabelHeightMm * MmToPx;
+        private const double RollWidthMm = 62;    // ความกว้างม้วนเทป (ค่าตายตัวของ QL-800)
+        private const double LabelLengthMm = 75.4; // ความยาวป้ายต่อดวง (ปรับได้ตามที่ทดสอบพิมพ์ได้จริง)
+
+        // ขนาด Visual ที่จะวาดจริง = ขนาดหลังหมุนเป็นแนวนอนแล้ว (ยาว x กว้าง)
+        private const double CardWidth = LabelLengthMm * MmToPx;
+        private const double CardHeight = RollWidthMm * MmToPx;
 
         // คืนรายการที่พิมพ์สำเร็จจริง (เรียงตามลำดับที่พิมพ์) - onProgress แจ้งความคืบหน้าจริงทีละใบ
         public List<PackingCardModel> PrintCards(IList<PackingCardModel> items, Action<int, int> onProgress = null)
@@ -30,7 +35,9 @@ namespace StoreSteels.Services
 
             try
             {
-                printDialog.PrintTicket.PageMediaSize = new PageMediaSize(CardWidth, CardHeight);
+                // PageMediaSize ต้องใส่เป็นขนาด "ฐาน" ของม้วน (กว้าง=62mm คงที่, ยาว=75.4mm) ไม่ใช่ขนาด
+                // หลังหมุนแล้ว - แล้วให้ PageOrientation เป็นตัวหมุนแสดงผลเป็นแนวนอนแทน
+                printDialog.PrintTicket.PageMediaSize = new PageMediaSize(RollWidthMm * MmToPx, LabelLengthMm * MmToPx);
                 printDialog.PrintTicket.PageOrientation = PageOrientation.Landscape;
             }
             catch
@@ -108,29 +115,23 @@ namespace StoreSteels.Services
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
+            // "CH" เป็นตัวอักษรตัวใหญ่หนาเฉยๆ (ไม่มีกล่องพื้นหลัง) ตามแบบการ์ดตัวอย่างจริง
             var companyPanel = new StackPanel { Orientation = Orientation.Horizontal };
 
-            var logoBox = new Border
-            {
-                Width = 26,
-                Height = 26,
-                Background = Brushes.Black,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            logoBox.Child = new TextBlock
+            var logoText = new TextBlock
             {
                 Text = "CH",
-                Foreground = Brushes.White,
+                Foreground = Brushes.Black,
                 FontWeight = FontWeights.Black,
-                FontSize = 11,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
+                FontSize = 22,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 6, 0)
             };
-            companyPanel.Children.Add(logoBox);
+            companyPanel.Children.Add(logoText);
 
-            var namePanel = new StackPanel { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-            namePanel.Children.Add(new TextBlock { Text = "CH. RADIATORS CO.,LTD.", FontWeight = FontWeights.Black, FontSize = 12 });
-            namePanel.Children.Add(new TextBlock { Text = "บริษัท ซี.เรเดียเตอร์ จำกัด", FontSize = 9, Foreground = Brushes.Gray });
+            var namePanel = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            namePanel.Children.Add(new TextBlock { Text = "CH. RADIATORS CO.LTD.", FontWeight = FontWeights.Black, FontSize = 12, Foreground = Brushes.Black });
+            namePanel.Children.Add(new TextBlock { Text = "บริษัท ซีเอชเรดิเอเตอร์ จำกัด", FontSize = 9, Foreground = Brushes.Black });
             companyPanel.Children.Add(namePanel);
 
             Grid.SetColumn(companyPanel, 0);

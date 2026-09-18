@@ -23,3 +23,18 @@ BEGIN
 
     CREATE INDEX IX_PackingPrintLog_Ticket ON dbo.PackingPrintLog (TicketNo);
 END
+ELSE
+BEGIN
+    -- Table already existed (created from the original VARCHAR(50) spec before this script was
+    -- updated) - widen LabelRef so the full QR text ("TicketNo | MaterialCode | WorkOrder | LotNo |
+    -- JobName | Qty") fits without the "String or binary data would be truncated" error.
+    -- (The app code also truncates defensively to 50 chars regardless, so this ALTER is optional -
+    -- run it if you want the full QR text kept in LabelRef instead of a shortened version.)
+    IF EXISTS (
+        SELECT 1 FROM sys.columns
+        WHERE object_id = OBJECT_ID('dbo.PackingPrintLog') AND name = 'LabelRef' AND max_length < 200
+    )
+    BEGIN
+        ALTER TABLE dbo.PackingPrintLog ALTER COLUMN LabelRef VARCHAR(200) NULL;
+    END
+END

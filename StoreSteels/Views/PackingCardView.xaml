@@ -89,8 +89,8 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="{StaticResource CyberPink}"/>
-                    <Setter Property="Foreground" Value="{StaticResource DeepDark}"/>
+                    <Setter Property="Background" Value="{StaticResource DeepDark}"/>
+                    <Setter Property="Foreground" Value="{StaticResource DangerRed}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -176,14 +176,12 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <!-- หัวการ์ด: โลโก้ + ชื่อบริษัท (ซ้าย), QR Code (ขวา) -->
+                                <!-- หัวการ์ด: "CH" ตัวใหญ่หนาเฉยๆ (ไม่มีกล่องพื้นหลัง) + ชื่อบริษัท (ซ้าย), QR Code (ขวา) -->
                                 <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal">
-                                    <Border Width="34" Height="34" Background="{StaticResource DeepDark}">
-                                        <TextBlock Text="CH" Foreground="White" FontWeight="Black" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="CH. RADIATORS CO.,LTD." FontWeight="Black" FontSize="14"/>
-                                        <TextBlock Text="บริษัท ซี.เรเดียเตอร์ จำกัด" FontSize="11" Foreground="#777"/>
+                                    <TextBlock Text="CH" Foreground="{StaticResource DeepDark}" FontWeight="Black" FontSize="26" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="CH. RADIATORS CO.LTD." FontWeight="Black" FontSize="14" Foreground="{StaticResource DeepDark}"/>
+                                        <TextBlock Text="บริษัท ซีเอชเรดิเอเตอร์ จำกัด" FontSize="11" Foreground="{StaticResource DeepDark}"/>
                                     </StackPanel>
                                 </StackPanel>
                                 <Border Grid.Row="0" Grid.Column="3" Width="48" Height="48" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right">
@@ -246,12 +244,10 @@
 
             <Border Grid.Row="3" CornerRadius="20" Background="#FDFDFD" BorderBrush="#F0F0F0" BorderThickness="1" ClipToBounds="True">
                 <DataGrid x:Name="dgPackingCards"
-                          EnableRowVirtualization="True"
+                          EnableRowVirtualization="False"
                           EnableColumnVirtualization="False"
-                          VirtualizingStackPanel.IsVirtualizing="True"
-                          VirtualizingStackPanel.VirtualizationMode="Recycling"
                           HorizontalScrollBarVisibility="Auto"
-                          ScrollViewer.CanContentScroll="True"
+                          ScrollViewer.CanContentScroll="False"
                           ScrollViewer.ScrollChanged="dgPackingCards_ScrollChanged"
                           ItemsSource="{Binding GroupedItems}"
                           SelectionMode="Extended" SelectionUnit="FullRow"
@@ -260,7 +256,7 @@
                           AutoGenerateColumns="False"
                           Background="Transparent"
                           BorderThickness="0"
-                          RowHeight="48"
+                          RowHeight="42"
                           FontSize="13"
                           FontWeight="Bold"
                           CellStyle="{StaticResource CenterCellStyle}"
