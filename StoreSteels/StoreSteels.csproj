@@ -20,4 +20,17 @@
     <PackageReference Include="XamlAnimatedGif" Version="2.3.1" />
   </ItemGroup>
 
+  <!--
+      All XAML in this project references icons/gifs via pack URIs (e.g. "/Assets/Icons/x.png"),
+      which requires each file to have WPF's "Resource" build action - the SDK does not apply this
+      by default. Visual Studio was adding per-file <Resource Include> entries locally each session
+      but that was never committed, so a plain `dotnet build`/checkout never had the assets embedded
+      and every pack URI failed at runtime with "Cannot locate resource" as soon as a page referencing
+      one loaded (e.g. MainView right after login). One wildcard covers every current and future file
+      under Assets/ so this can't silently regress again.
+  -->
+  <ItemGroup>
+    <Resource Include="Assets\**\*.png;Assets\**\*.gif;Assets\**\*.ico" />
+  </ItemGroup>
+
 </Project>
