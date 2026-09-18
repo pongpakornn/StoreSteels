@@ -39,9 +39,19 @@ namespace StoreSteels.Services
             return keys;
         }
 
+        // ป้องกัน "String or binary data would be truncated" เผื่อฐานที่ deploy จริงยังเป็นสคีมาเดิม
+        // (LabelRef VARCHAR(50) ก่อนที่จะขยายเป็น 200 ใน PackingPrintLog.sql) - ตัดให้พอดี 50 เสมอ
+        private const int LabelRefMaxLength = 50;
+
         public void LogPrinted(PackingCardModel item, string userId)
         {
             int.TryParse(item.ItemNo, out int itemNoValue);
+
+            string labelRef = item.QrText ?? "";
+            if (labelRef.Length > LabelRefMaxLength)
+            {
+                labelRef = labelRef.Substring(0, LabelRefMaxLength);
+            }
 
             const string sql = @"
                 IF NOT EXISTS (SELECT 1 FROM dbo.PackingPrintLog WHERE TicketNo = @TicketNo AND ItemNo = @ItemNo)
@@ -63,7 +73,7 @@ namespace StoreSteels.Services
                 cmd.Parameters.AddWithValue("@JobName", (object)item.JobName ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Qty", item.Qty);
                 cmd.Parameters.AddWithValue("@PrintedBy", userId ?? "Unknown");
-                cmd.Parameters.AddWithValue("@LabelRef", (object)item.QrText ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@LabelRef", string.IsNullOrEmpty(labelRef) ? (object)DBNull.Value : labelRef);
 
                 conn.Open();
                 cmd.ExecuteNonQuery();
