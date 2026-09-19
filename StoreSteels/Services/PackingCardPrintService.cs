@@ -98,10 +98,12 @@ namespace StoreSteels.Services
 
                 doc.Length = (int)Math.Round(LabelLengthMm * TwipsPerMm);
 
+                int qrIndex = doc.GetBarcodeIndex("QrCode");
+
                 for (int i = 0; i < items.Count; i++)
                 {
                     var item = items[i];
-                    ApplyFields(doc, item);
+                    ApplyFields(doc, item, qrIndex);
 
                     doc.StartPrint("", bpac.PrintOptionConstants.bpoDefault);
                     doc.PrintOut(1, bpac.PrintOptionConstants.bpoDefault);
@@ -120,7 +122,7 @@ namespace StoreSteels.Services
             return printed;
         }
 
-        private static void ApplyFields(bpac.Document doc, PackingCardModel item)
+        private static void ApplyFields(bpac.Document doc, PackingCardModel item, int qrIndex)
         {
             SetText(doc, "TicketNo", item.TicketNo);
             SetText(doc, "GroupCode", item.GroupCode);
@@ -130,12 +132,26 @@ namespace StoreSteels.Services
             SetText(doc, "Qty", item.Qty.ToString("0.##"));
             SetText(doc, "TicketDate", item.TicketDate == DateTime.MinValue ? "" : item.TicketDate.ToString("dd-MM-yyyy"));
 
-            // เดิมใช้ GetBarcodeIndex("QrCode") + SetBarcodeData(index, data) แยกจากข้อความ แต่ในเทมเพลต
-            // (Assets/Labels/PackingCard.lbx) obj "QrCode" ยังโชว์ข้อความออกแบบ <pt:data>PLACEHOLDER</pt:data>
-            // ค้างอยู่ตอนพิมพ์ แปลว่า Object.Text ใช้ตั้งค่า barcode object ได้เหมือน text object ปกติ
-            // (ตาม sample ทางการของ b-PAC เอง) จึงเปลี่ยนมาใช้ SetText แบบเดียวกับ field อื่นแทน ตัดความ
-            // เสี่ยงจาก GetBarcodeIndex/SetBarcodeData ที่ยังไม่ชัดว่า index ตรงกันจริงหรือไม่
-            SetText(doc, "QrCode", item.QrText);
+            // ทั้ง SetBarcodeData(index, data) (วิธีทางการของ b-PAC สำหรับ barcode object) และ Object.Text
+            // ตรงๆ ผ่าน SetText เคยลองแยกกันมาแล้วทั้งคู่ แต่สแกนจริงยังขึ้น "PLACEHOLDER" ค้าง (ค่า
+            // design-time ที่ save ไว้ใน <pt:data> ของ obj "QrCode" ใน PackingCard.lbx) เลยยิงทั้งสองทาง
+            // พร้อมกันไปเลยเผื่อเครื่อง/เวอร์ชัน b-PAC นี้ต้องการอีกทางใดทางหนึ่งเป็นพิเศษ (ไม่ error แม้
+            // อีกทางจะไม่มีผลจริงกับ barcode object ก็ตาม)
+            if (qrIndex >= 0)
+            {
+                doc.SetBarcodeData(qrIndex, item.QrText ?? "");
+            }
+
+            // ห่อ try/catch ไว้เฉยๆ เผื่อ .Text setter ไม่รองรับกับ object ประเภท barcode จริงๆ แล้ว COM
+            // throw exception ออกมา - ไม่ให้พังการพิมพ์ทั้งชุดเพราะ fallback ตัวนี้ตัวเดียว
+            try
+            {
+                SetText(doc, "QrCode", item.QrText);
+            }
+            catch
+            {
+                // ข้ามเงียบๆ - ยึดผลจาก SetBarcodeData ด้านบนเป็นหลัก
+            }
         }
 
         // GetObject คืนค่า null ถ้าไม่เจอ object ชื่อนั้นในเทมเพลต (เช่น template ยังสร้างไม่ครบ) -
