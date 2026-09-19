@@ -82,7 +82,10 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridCell">
                         <Border Background="{TemplateBinding Background}" BorderThickness="0">
-                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <!-- Stretch แทน Center: ปล่อยให้ ElementStyle ของแต่ละคอลัมน์ (TextAlignment=Center)
+                                 เป็นตัวจัดข้อความให้อยู่กลางแทน ไม่ให้ ContentPresenter บีบตัวเองจนคอลัมน์
+                                 เพี้ยนความกว้างเวลามีหลาย Group/แถวเยอะๆ -->
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -127,6 +130,7 @@
         <Style x:Key="WrapCellTextStyle" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="Padding" Value="4"/>
         </Style>
 
@@ -134,6 +138,7 @@
             <Setter Property="TextWrapping" Value="NoWrap"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
             <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="Padding" Value="4"/>
         </Style>
     </Page.Resources>
@@ -321,13 +326,13 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="BILL NO." Binding="{Binding TicketNo}" Width="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="GROUP" Binding="{Binding GroupCode}" Width="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="PD CODE" Binding="{Binding MaterialCode}" Width="130" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty, StringFormat='{}{0:0.##}'}" Width="70" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="WORKORDER" Binding="{Binding WorkOrder}" Width="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="LOT" Binding="{Binding LotNo}" Width="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="REMARK" Binding="{Binding JobName}" Width="*" ElementStyle="{StaticResource WrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="BILL NO." Binding="{Binding TicketNo}" Width="150" MinWidth="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="GROUP" Binding="{Binding GroupCode}" Width="80" MinWidth="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="PD CODE" Binding="{Binding MaterialCode}" Width="130" MinWidth="130" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty, StringFormat='{}{0:0.##}'}" Width="70" MinWidth="70" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="WORKORDER" Binding="{Binding WorkOrder}" Width="150" MinWidth="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="LOT" Binding="{Binding LotNo}" Width="80" MinWidth="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="REMARK" Binding="{Binding JobName}" Width="*" MinWidth="200" ElementStyle="{StaticResource WrapCellTextStyle}"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
