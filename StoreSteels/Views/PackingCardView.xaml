@@ -95,30 +95,44 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Group header ("Group : 4H") สำหรับตารางแบบจัดกลุ่มคลัง -->
+        <!-- Group header ("Group : 4H") สำหรับตารางแบบจัดกลุ่มคลัง - ปรับให้เหมือนหน้า StoreMaxMinView
+             (CategoryHeaderStyle): พื้นหลังม่วงอ่อน ขอบซ้ายเน้นสีม่วงเข้ม + badge นับจำนวนรายการ -
+             Expander ในตัวมีปุ่ม expand/collapse (▲/▼) มาให้อยู่แล้วโดยไม่ต้องเขียนเพิ่ม -->
         <Style x:Key="GroupHeaderStyle" TargetType="GroupItem">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="GroupItem">
-                        <Expander IsExpanded="True" Background="Transparent" BorderThickness="0">
+                        <Expander IsExpanded="True" Background="Transparent" BorderThickness="0" Margin="0,0,0,5">
                             <Expander.Header>
-                                <Border Background="{StaticResource SoftGray}" CornerRadius="6" Padding="12,6" Margin="0,6,0,2">
-                                    <TextBlock FontSize="13" FontWeight="ExtraBold" Foreground="{StaticResource MainPurple}">
-                                        <Run Text="Group : "/>
-                                        <Run Text="{Binding Name, Mode=OneWay}"/>
-                                    </TextBlock>
+                                <Border Background="#F3E5F5" CornerRadius="5" Height="38" Margin="-5,0,-5,0" BorderBrush="{StaticResource MainPurple}" BorderThickness="2,0,0,0">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
+                                        <TextBlock Text="Group : " FontWeight="Bold" VerticalAlignment="Center" Foreground="{StaticResource MainPurple}" FontSize="14"/>
+                                        <TextBlock Text="{Binding Name, Mode=OneWay}" FontWeight="ExtraBold" VerticalAlignment="Center" Foreground="{StaticResource MainPurple}" FontSize="15" Margin="5,0,0,0"/>
+                                        <Border Background="{StaticResource MainPurple}" CornerRadius="12" Padding="12,6" Margin="15,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding ItemCount, Mode=OneWay, StringFormat='{}{0} รายการ'}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                        </Border>
+                                    </StackPanel>
                                 </Border>
                             </Expander.Header>
-                            <ItemsPresenter/>
+                            <ItemsPresenter Margin="0,5,0,5"/>
                         </Expander>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <!-- ให้ข้อความยาวๆ ในตาราง (เช่น REMARK) ตัดขึ้นบรรทัดใหม่แทนการถูกตัดหาย -->
+        <!-- เฉพาะ REMARK (ข้อความยาวๆ) เท่านั้นที่ตัดขึ้นบรรทัดใหม่ - คอลัมน์อื่นเป็น NoWrap ตัดชื่อ/รหัส
+             พอดีความกว้างจริงแทน การใช้ Wrap ร่วมกับคอลัมน์ Star ที่แคบเกินไปคือสาเหตุที่ตัวอักษรตัด
+             ขึ้นบรรทัดใหม่ทีละตัวจนแถวสูงผิดปกติ -->
         <Style x:Key="WrapCellTextStyle" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="4"/>
+        </Style>
+
+        <Style x:Key="NoWrapCellTextStyle" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
             <Setter Property="TextAlignment" Value="Center"/>
             <Setter Property="Padding" Value="4"/>
         </Style>
@@ -307,13 +321,13 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="BILL NO." Binding="{Binding TicketNo}" Width="1.3*" ElementStyle="{StaticResource WrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="GROUP" Binding="{Binding GroupCode}" Width="0.7*" ElementStyle="{StaticResource WrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="PD CODE" Binding="{Binding MaterialCode}" Width="1.1*" ElementStyle="{StaticResource WrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty, StringFormat='{}{0:0.##}'}" Width="0.6*" ElementStyle="{StaticResource WrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="WORKORDER" Binding="{Binding WorkOrder}" Width="1.3*" ElementStyle="{StaticResource WrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="LOT" Binding="{Binding LotNo}" Width="0.9*" ElementStyle="{StaticResource WrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="REMARK" Binding="{Binding JobName}" Width="2.2*" ElementStyle="{StaticResource WrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="BILL NO." Binding="{Binding TicketNo}" Width="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="GROUP" Binding="{Binding GroupCode}" Width="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="PD CODE" Binding="{Binding MaterialCode}" Width="130" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty, StringFormat='{}{0:0.##}'}" Width="70" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="WORKORDER" Binding="{Binding WorkOrder}" Width="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="LOT" Binding="{Binding LotNo}" Width="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="REMARK" Binding="{Binding JobName}" Width="*" ElementStyle="{StaticResource WrapCellTextStyle}"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
