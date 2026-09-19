@@ -38,6 +38,12 @@ namespace StoreSteels.Services
         private const double CardWidth = LabelLengthMm * MmToPx;
         private const double CardHeight = RollWidthMm * MmToPx;
 
+        // ขอบกระดาษ - ตรงกับค่าที่ยืนยันแล้วว่าพิมพ์ได้จริงจากไดรเวอร์ QL-800 (ตั้งค่าเครื่องพิมพ์ > ตั้งค่าหน้า)
+        private const double MarginLeftMm = 3;
+        private const double MarginRightMm = 3;
+        private const double MarginTopMm = 1.6;
+        private const double MarginBottomMm = 1.5;
+
         private static readonly string TemplatePath =
             Path.Combine(AppContext.BaseDirectory, "Assets", "Labels", "PackingCard.lbx");
 
@@ -83,7 +89,11 @@ namespace StoreSteels.Services
 
                 if (!string.IsNullOrEmpty(printerName))
                 {
-                    doc.SetPrinter(printerName, false);
+                    // พารามิเตอร์ตัวที่ 2 คือ fitPage (ยืนยันจาก metadata ของ Interop.bpac.dll เอง - ไม่ใช่
+                    // "IsDefault" ตามที่เข้าใจผิดตอนแรก) true = ให้ b-PAC ปรับ/พอดีกับสื่อที่ใส่อยู่ในเครื่อง
+                    // จริงแทนที่จะเรียกร้องให้ตรงกับสื่อที่ตั้งไว้ในเทมเพลตเป๊ะๆ ซึ่งเป็นสาเหตุของ popup
+                    // เตือน "ม้วนฉลากไม่ตรงกับที่เลือกไว้ในแอปพลิเคชัน" ตอนพิมพ์ผ่านโปรแกรม
+                    doc.SetPrinter(printerName, true);
                 }
 
                 doc.Length = (int)Math.Round(LabelLengthMm * TwipsPerMm);
@@ -147,7 +157,7 @@ namespace StoreSteels.Services
 
             try
             {
-                // PageMediaSize ต้องใส่เป็นขนาด "ฐาน" ของม้วน (กว้าง=62mm คงที่, ยาว=75.4mm) ไม่ใช่ขนาด
+                // PageMediaSize ต้องใส่เป็นขนาด "ฐาน" ของม้วน (กว้าง=62mm คงที่, ยาว=40mm) ไม่ใช่ขนาด
                 // หลังหมุนแล้ว - แล้วให้ PageOrientation เป็นตัวหมุนแสดงผลเป็นแนวนอนแทน (ไดรเวอร์บางรุ่น
                 // อาจยังเด้ง popup เตือนม้วนฉลากไม่ตรง ให้กด "ดำเนินการต่อ" เอง - ไม่ block การพิมพ์)
                 printDialog.PrintTicket.PageMediaSize = new PageMediaSize(RollWidthMm * MmToPx, LabelLengthMm * MmToPx);
@@ -184,7 +194,9 @@ namespace StoreSteels.Services
                 Background = Brushes.White,
                 BorderBrush = Brushes.Black,
                 BorderThickness = new Thickness(1.2),
-                Padding = new Thickness(10)
+                Padding = new Thickness(
+                    MarginLeftMm * MmToPx, MarginTopMm * MmToPx,
+                    MarginRightMm * MmToPx, MarginBottomMm * MmToPx)
             };
 
             var root = new Grid();
