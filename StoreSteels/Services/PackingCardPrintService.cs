@@ -98,22 +98,13 @@ namespace StoreSteels.Services
 
                 doc.Length = (int)Math.Round(LabelLengthMm * TwipsPerMm);
 
-                int qrIndex = doc.GetBarcodeIndex("QrCode");
-
-                // เทปที่ใช้จริงเป็นแบบ 2 สี (ขาว/ดำ-แดง) ต้องสั่ง bpoColor ตรงๆ ไม่งั้น b-PAC จะส่งเป็น
-                // job ขาวดำธรรมดาไปให้ไดรเวอร์ ซึ่งไม่ตรงกับเทปที่ใส่จริง แล้วไดรเวอร์จะเด้ง popup เตือน
-                // "มีการติดตั้งเทปสีขาวอักษรดำ/แดงอยู่ ... เปลี่ยนชนิดของกระดาษในไดรเวอร์เป็นสีดำ/แดง"
-                // ทุกครั้งที่พิมพ์ผ่านโปรแกรม (ทั้งที่พิมพ์ตรงผ่านไดรเวอร์เองไม่ติดปัญหานี้ เพราะตั้ง
-                // ชนิดกระดาษเป็น "ดำ/แดง" ไว้ที่ไดรเวอร์อยู่แล้ว)
-                const bpac.PrintOptionConstants printOptions = bpac.PrintOptionConstants.bpoColor;
-
                 for (int i = 0; i < items.Count; i++)
                 {
                     var item = items[i];
-                    ApplyFields(doc, item, qrIndex);
+                    ApplyFields(doc, item);
 
-                    doc.StartPrint("", printOptions);
-                    doc.PrintOut(1, printOptions);
+                    doc.StartPrint("", bpac.PrintOptionConstants.bpoDefault);
+                    doc.PrintOut(1, bpac.PrintOptionConstants.bpoDefault);
                     doc.EndPrint();
 
                     printed.Add(item);
@@ -129,7 +120,7 @@ namespace StoreSteels.Services
             return printed;
         }
 
-        private static void ApplyFields(bpac.Document doc, PackingCardModel item, int qrIndex)
+        private static void ApplyFields(bpac.Document doc, PackingCardModel item)
         {
             SetText(doc, "TicketNo", item.TicketNo);
             SetText(doc, "GroupCode", item.GroupCode);
@@ -139,12 +130,12 @@ namespace StoreSteels.Services
             SetText(doc, "Qty", item.Qty.ToString("0.##"));
             SetText(doc, "TicketDate", item.TicketDate == DateTime.MinValue ? "" : item.TicketDate.ToString("dd-MM-yyyy"));
 
-            // Object.Text ใช้ตั้งค่าได้เฉพาะ object ประเภทข้อความ (bobText) เท่านั้น - barcode/QR ต้อง
-            // ตั้งผ่าน Document.SetBarcodeData(index, data) โดยเฉพาะตามสเปกของ b-PAC
-            if (qrIndex >= 0)
-            {
-                doc.SetBarcodeData(qrIndex, item.QrText ?? "");
-            }
+            // เดิมใช้ GetBarcodeIndex("QrCode") + SetBarcodeData(index, data) แยกจากข้อความ แต่ในเทมเพลต
+            // (Assets/Labels/PackingCard.lbx) obj "QrCode" ยังโชว์ข้อความออกแบบ <pt:data>PLACEHOLDER</pt:data>
+            // ค้างอยู่ตอนพิมพ์ แปลว่า Object.Text ใช้ตั้งค่า barcode object ได้เหมือน text object ปกติ
+            // (ตาม sample ทางการของ b-PAC เอง) จึงเปลี่ยนมาใช้ SetText แบบเดียวกับ field อื่นแทน ตัดความ
+            // เสี่ยงจาก GetBarcodeIndex/SetBarcodeData ที่ยังไม่ชัดว่า index ตรงกันจริงหรือไม่
+            SetText(doc, "QrCode", item.QrText);
         }
 
         // GetObject คืนค่า null ถ้าไม่เจอ object ชื่อนั้นในเทมเพลต (เช่น template ยังสร้างไม่ครบ) -
