@@ -362,13 +362,13 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock Text="CUSTOMER:" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" Foreground="#555" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="cbCustomer" Width="160" Height="38" Margin="0,0,15,0"
+                    <TextBlock Text="CATEGORY:" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" Foreground="#555" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="cbCategory" Width="160" Height="38" Margin="0,0,15,0"
                               Style="{StaticResource CyberComboBox}"
                               ItemContainerStyle="{StaticResource CyberComboBoxItem}"
-                              ItemsSource="{Binding Customers}"
-                              SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
-                              SelectionChanged="cbCustomer_SelectionChanged"
+                              ItemsSource="{Binding Categories}"
+                              SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                              SelectionChanged="cbCategory_SelectionChanged"
                               VerticalContentAlignment="Center" Padding="10,0"/>
 
                     <Button x:Name="btnOverMax" Content="📈 MAX Stock" Width="160" Margin="0,0,8,0" Click="btnOverMax_Click"
@@ -477,31 +477,10 @@
                 </DataGrid.GroupStyle>
 
                 <DataGrid.Columns>
-                    <!--DataGridTextColumn Header="ID" Binding="{Binding ID}" IsReadOnly="True" Width="60">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="FontWeight" Value="Bold"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>-->
-
-                    <DataGridTextColumn Header="MODEL" Binding="{Binding ModelCode}" IsReadOnly="True" Width="90">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="FontWeight" Value="Bold"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-
                     <DataGridTemplateColumn Header="IMAGE" Width="85" IsReadOnly="True">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Border Width="55" Height="55" Background="#FFFFFF" CornerRadius="6" BorderBrush="#EAEAEA" BorderThickness="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <!--<Image Source="{Binding ProductImage}" Width="50" Height="50" Stretch="Uniform" Margin="2" RenderOptions.BitmapScalingMode="LowQuality" SnapsToDevicePixels="True" UseLayoutRounding="True"/>-->
                                     <Image Source="{Binding ProductImage}" Width="50" Height="50" Stretch="Uniform" Margin="2" RenderOptions.BitmapScalingMode="LowQuality" SnapsToDevicePixels="True" UseLayoutRounding="True">
                                         <Image.Style>
                                             <Style TargetType="Image">
@@ -522,7 +501,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="PD CODE" Binding="{Binding PartCode}" IsReadOnly="True" Width="0.8*" MinWidth="80">
+                    <DataGridTextColumn Header="PD CODE" Binding="{Binding PartCode}" IsReadOnly="True" Width="1*" MinWidth="100">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -534,17 +513,7 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="PART A" Binding="{Binding PartACode}" IsReadOnly="True" Width="1*" MinWidth="100">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="FontWeight" Value="Bold"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-
-                    <DataGridTextColumn Header="PART NO" Binding="{Binding PartNo}" IsReadOnly="True" Width="1.8*" MinWidth="160">
+                    <DataGridTextColumn Header="PRODUCT NAME" Binding="{Binding PartName}" IsReadOnly="True" Width="2.4*" MinWidth="220">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -556,29 +525,7 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="PRODUCT NAME" Binding="{Binding PartName}" IsReadOnly="True" Width="2*" MinWidth="200">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="FontWeight" Value="Bold"/>
-                                <Setter Property="TextWrapping" Value="Wrap"/>
-                                <Setter Property="TextAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-
-                    <DataGridTextColumn Header="PACKSIZE" Binding="{Binding PackSize}" IsReadOnly="True" Width="95">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="FontWeight" Value="Bold"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-
-                    <DataGridTextColumn Header="MAX(BOX)" Width="100" 
+                    <DataGridTextColumn Header="MAX" Width="90"
                          Binding="{Binding Max, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
@@ -589,7 +536,7 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="MIN(BOX)" Width="100" 
+                    <DataGridTextColumn Header="MIN" Width="90"
                         Binding="{Binding Min, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
@@ -600,7 +547,8 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="STOCK(BOX)" Binding="{Binding QtyStkb, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" IsReadOnly="False" Width="110">
+                    <!-- น้ำหนักคงคลัง (กก.) - เดิมแยก STOCK(BOX)/STOCK(PCS) 2 คอลัมน์ ตอนนี้เหลือค่าเดียว -->
+                    <DataGridTextColumn Header="QTY (KG.)" Binding="{Binding Qty, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" IsReadOnly="False" Width="110">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -610,17 +558,7 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="STOCK(PCS)" Binding="{Binding Stock, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" IsReadOnly="False" Width="110">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="FontWeight" Value="Bold"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-
-                    <DataGridTextColumn Header="REMARK" Binding="{Binding Remark, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="False" Width="1.5*" MinWidth="150">
+                    <DataGridTextColumn Header="REMARK" Binding="{Binding Remark, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="False" Width="1.6*" MinWidth="150">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -646,21 +584,6 @@
                         </DataGridTextColumn.EditingElementStyle>
                     </DataGridTextColumn>
 
-                    <!--<DataGridTemplateColumn Header="STATUS" Width="90" IsReadOnly="True">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Ellipse Style="{StaticResource CyberGlowEllipse}">
-                                    <Ellipse.Fill>
-                                        <MultiBinding Converter="{StaticResource StatusToColorConverter}">
-                                            <Binding Path="QtyStkb" UpdateSourceTrigger="PropertyChanged"/>
-                                            <Binding Path="Max" UpdateSourceTrigger="PropertyChanged"/>
-                                            <Binding Path="Min" UpdateSourceTrigger="PropertyChanged"/>
-                                        </MultiBinding>
-                                    </Ellipse.Fill>
-                                </Ellipse>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>-->
                     <DataGridTemplateColumn Header="STATUS"
                         Width="90"
                         IsReadOnly="True">

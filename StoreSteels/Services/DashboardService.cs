@@ -19,22 +19,24 @@ namespace StoreSteels.Services
             {
                 conn.Open();
 
-                // Card 1: แสดงจำนวนลูกค้าทั้งหมดที่มี IS_SHOW_MST = 1 (นับแบบ DISTINCT)
-                string sqlCust = @"SELECT COUNT(DISTINCT PT_CUST) 
-                                   FROM MST_PART 
-                                   WHERE IS_ACTIVE = 1 
-                                     AND IS_SHOW_MST = 1 
-                                     AND PT_CUST IS NOT NULL 
-                                     AND PT_CUST <> ''";
+                // Card 1: แสดงจำนวนซัพพลายเออร์ทั้งหมดที่มี IS_SHOW_MST = 1 (นับแบบ DISTINCT)
+                // schema ใหม่ PT_CUST เปลี่ยนชื่อเป็น PT_SUPPLIER
+                string sqlCust = @"SELECT COUNT(DISTINCT PT_SUPPLIER)
+                                   FROM MST_PART
+                                   WHERE IS_ACTIVE = 1
+                                     AND IS_SHOW_MST = 1
+                                     AND PT_SUPPLIER IS NOT NULL
+                                     AND PT_SUPPLIER <> ''";
                 using (SqlCommand cmd = new SqlCommand(sqlCust, conn))
                 {
                     totalCustomers = Convert.ToInt32(cmd.ExecuteScalar() ?? 0);
                 }
 
-                // Card 2: แสดงจำนวน PartACode ทั้งหมดที่มี IS_SHOW_MST = 1
-                string sqlProd = @"SELECT COUNT(DISTINCT PT_ACODE) 
-                                   FROM MST_PART 
-                                   WHERE IS_ACTIVE = 1 
+                // Card 2: แสดงจำนวนสินค้าทั้งหมดที่มี IS_SHOW_MST = 1
+                // schema ใหม่ตัด PT_ACODE ออกแล้ว - นับจาก PT_CODE ซึ่งเป็นตัวระบุหลักตัวเดียว
+                string sqlProd = @"SELECT COUNT(DISTINCT PT_CODE)
+                                   FROM MST_PART
+                                   WHERE IS_ACTIVE = 1
                                      AND IS_SHOW_MST = 1";
                 using (SqlCommand cmd = new SqlCommand(sqlProd, conn))
                 {
@@ -105,20 +107,21 @@ WHERE StockStatus IN ('UNDER_MIN', 'OUT_OF_STOCK')
             using (SqlConnection conn = new SqlConnection(GlobalConfig.ConnStr))
             {
                 conn.Open();
-                string sql = @"SELECT DISTINCT PT_CUST 
-                       FROM MST_PART 
-                       WHERE IS_ACTIVE = 1 
-                         AND IS_SHOW_MST = 1 
-                         AND PT_CUST IS NOT NULL 
-                         AND PT_CUST <> ''
-                       ORDER BY PT_CUST";
+                // schema ใหม่ PT_CUST เปลี่ยนชื่อเป็น PT_SUPPLIER
+                string sql = @"SELECT DISTINCT PT_SUPPLIER
+                       FROM MST_PART
+                       WHERE IS_ACTIVE = 1
+                         AND IS_SHOW_MST = 1
+                         AND PT_SUPPLIER IS NOT NULL
+                         AND PT_SUPPLIER <> ''
+                       ORDER BY PT_SUPPLIER";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        customers.Add(reader["PT_CUST"].ToString());
+                        customers.Add(reader["PT_SUPPLIER"].ToString());
                     }
                 }
             }

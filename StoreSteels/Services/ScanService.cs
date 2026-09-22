@@ -25,15 +25,18 @@ namespace StoreSteels.Services
                     {
                         if (rdr.Read())
                         {
+                            // schema ใหม่ตัด PT_ACODE/PT_NO ออกจาก MST_PART แล้ว - PT_CODE เป็นตัวระบุหลัก
+                            // ตัวเดียว ใส่ PartACode = PartCode ไว้เพื่อความเข้ากันได้กับหน้าจอเดิมที่ยัง
+                            // ผูก binding กับ PartACode อยู่
+                            string code = rdr["PT_CODE"].ToString();
                             return new ScanItemModel
                             {
                                 PartId = rdr["PT_ID"] != DBNull.Value ? Convert.ToInt32(rdr["PT_ID"]) : 0,
-                                PartCode = rdr["PT_CODE"].ToString(),
+                                PartCode = code,
                                 PartName = rdr["PT_DESC"].ToString(),
-                                PartNo = rdr["PT_NO"] != DBNull.Value ? rdr["PT_NO"].ToString() : string.Empty,
-                                PartACode = rdr["PT_ACODE"] != DBNull.Value ? rdr["PT_ACODE"].ToString() : string.Empty,
+                                PartNo = string.Empty,
+                                PartACode = code,
                                 Qty = rdr["PT_PSZ"] != DBNull.Value ? Convert.ToInt32(rdr["PT_PSZ"]) : 1,
-                                // PartImg = rdr["PT_IMG"] != DBNull.Value ? rdr["PT_IMG"].ToString() : string.Empty, -- ดึงค่าจาก SQL
                                 UpdateTime = DateTime.Now
                             };
                         }
@@ -48,16 +51,16 @@ namespace StoreSteels.Services
             var list = new List<ScanItemModel>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                // ✅ แก้ไข SQL: ให้ดึง t.PT_ACODE จากตาราง Transaction ตรงๆ ตามที่นนท์เพิ่มคอลัมน์เข้ามาครับ
-                string sql = @"SELECT 
-                                    ISNULL(m.PT_CODE, '') AS PT_CODE, 
-                                    ISNULL(m.PT_DESC, 'Unknown Part') AS PT_DESC, 
-                                    ISNULL(t.PT_ACODE, '') AS PT_ACODE, -- ดึงจากตารางตักประวัติสแกน
-                                    ISNULL(m.PT_NO, '') AS PT_NO,
+                // schema ใหม่: MST_PART ไม่มี PT_NO แล้ว - ตัดออกจาก SELECT (TRN_SCAN.PT_ACODE เป็นคอลัมน์
+                // ของตัวเองในตาราง log ไม่เกี่ยวกับ MST_PART.PT_ACODE ที่ถูกลบ เลยยังอ่านได้ตามเดิม)
+                string sql = @"SELECT
+                                    ISNULL(m.PT_CODE, '') AS PT_CODE,
+                                    ISNULL(m.PT_DESC, 'Unknown Part') AS PT_DESC,
+                                    ISNULL(t.PT_ACODE, '') AS PT_ACODE,
                                     t.PT_ID,
-                                    t.TX_QTY, 
-                                    t.TX_DATE, 
-                                    t.TX_TYPE 
+                                    t.TX_QTY,
+                                    t.TX_DATE,
+                                    t.TX_TYPE
                                FROM TRN_SCAN t
                                LEFT JOIN MST_PART m ON t.PT_ID = m.PT_ID
                                WHERE CAST(t.TX_DATE AS DATE) = CAST(GETDATE() AS DATE)
@@ -76,7 +79,7 @@ namespace StoreSteels.Services
                                 PartCode = rdr["PT_CODE"].ToString(),
                                 PartName = rdr["PT_DESC"].ToString(),
                                 PartACode = rdr["PT_ACODE"].ToString(),
-                                PartNo = rdr["PT_NO"].ToString(),
+                                PartNo = string.Empty,
                                 Qty = Convert.ToInt32(rdr["TX_QTY"]),
                                 UpdateTime = Convert.ToDateTime(rdr["TX_DATE"]),
                                 Status = rdr["TX_TYPE"].ToString()
@@ -87,11 +90,13 @@ namespace StoreSteels.Services
             }
             return list;
         }
-        
+
         // ==========================================
         // 📥 ขาเข้า: UpdateStock
         // ==========================================
         // ✅ เพิ่มพารามิเตอร์ refNo = บาร์โค้ดดิบ "ทั้งชุด" ที่แสกนเนอร์ยิงเข้ามา เก็บลง REF_NO
+        // schema ใหม่: MST_PART เหลือ QTY_STKB ตัวเดียว (ไม่มี QTY_STK แยกกล่อง/ชิ้นอีกต่อไป) - บวก/ลบ
+        // ตรงๆ ด้วยจำนวนที่สแกนเข้ามาจริง (qty) แทนการ +1 กล่องแบบเดิม
         public bool UpdateStock(int ptId, string partCode, string partACode, int qty, string userId, string refNo)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -101,9 +106,8 @@ namespace StoreSteels.Services
 
                 try
                 {
-                    string updateSql = @"UPDATE MST_PART 
-                                 SET QTY_STK = QTY_STK + @Qty, 
-                                     QTY_STKB = QTY_STKB + 1 
+                    string updateSql = @"UPDATE MST_PART
+                                 SET QTY_STKB = ISNULL(QTY_STKB, 0) + @Qty
                                  WHERE PT_ID = @PtId";
 
                     // ✅ เพิ่มคอลัมน์ REF_NO
@@ -157,7 +161,7 @@ namespace StoreSteels.Services
                 {
                     try
                     {
-                        string checkSql = @"SELECT ISNULL(QTY_STK, 0) FROM MST_PART WHERE PT_ID = @PtId";
+                        string checkSql = @"SELECT ISNULL(QTY_STKB, 0) FROM MST_PART WHERE PT_ID = @PtId";
                         int currentStock = 0;
                         using (SqlCommand cmdCheck = new SqlCommand(checkSql, conn, trans))
                         {
@@ -172,9 +176,8 @@ namespace StoreSteels.Services
                             return false;
                         }
 
-                        string updateSql = @"UPDATE MST_PART 
-                                     SET QTY_STK = QTY_STK - @Qty, 
-                                         QTY_STKB = CASE WHEN QTY_STKB > 0 THEN QTY_STKB - 1 ELSE 0 END 
+                        string updateSql = @"UPDATE MST_PART
+                                     SET QTY_STKB = ISNULL(QTY_STKB, 0) - @Qty
                                      WHERE PT_ID = @PtId";
 
                         using (SqlCommand cmdUpdate = new SqlCommand(updateSql, conn, trans))
@@ -221,7 +224,7 @@ namespace StoreSteels.Services
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 // คิวรีดึงยอดคงเหลือปัจจุบันจาก Master Table ตรงๆ
-                string sql = "SELECT ISNULL(QTY_STK, 0) FROM MST_PART WHERE PT_ID = @PtId";
+                string sql = "SELECT ISNULL(QTY_STKB, 0) FROM MST_PART WHERE PT_ID = @PtId";
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@PtId", ptId);
@@ -239,39 +242,5 @@ namespace StoreSteels.Services
                 }
             }
         }
-
-        //จริงๆต้องอัพเดทิงฟังก์ชันนี้ให้ดึงยอดคงคลังทั้งสองค่า (QTY_STK และ QTY_STKB) ด้วย
-        // ==========================================
-        // 🔍 ฟังก์ชันดึงยอดคงคลัง: ปรับเพื่อให้ได้ยอด "กล่อง" กลับมาด้วย
-        // ==========================================
-        // เพื่อความคลีน พี่แนะนำให้ปรับฟังก์ชันดึงยอดเดิม ให้ส่งกลับมาเป็น Object (Tuple) ทั้งยอดชิ้นและยอดกล่องครับ
-        //public (int StockPcs, int StockBox) GetInventoryBalanceBoth(int ptId)
-        //{
-        //    using (SqlConnection conn = new SqlConnection(_connectionString))
-        //    {
-        //        // 🔥 คิวรีดึงมาทั้งคู่เลย QTY_STK และ QTY_STKB
-        //        string sql = "SELECT ISNULL(QTY_STK, 0) AS QTY_STK, ISNULL(QTY_STKB, 0) AS QTY_STKB FROM MST_PART WHERE PT_ID = @PtId";
-        //        using (SqlCommand cmd = new SqlCommand(sql, conn))
-        //        {
-        //            cmd.Parameters.AddWithValue("@PtId", ptId);
-        //            try
-        //            {
-        //                conn.Open();
-        //                using (SqlDataReader rdr = cmd.ExecuteReader())
-        //                {
-        //                    if (rdr.Read())
-        //                    {
-        //                        return (Convert.ToInt32(rdr["QTY_STK"]), Convert.ToInt32(rdr["QTY_STKB"]));
-        //                    }
-        //                }
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                System.Diagnostics.Debug.WriteLine($"GetInventoryBalanceBoth Error: {ex.Message}");
-        //            }
-        //        }
-        //    }
-        //    return (0, 0);
-        //}
     }
 }

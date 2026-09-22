@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using StoreSteels.Core;
 using StoreSteels.Models;
 using System;
@@ -12,7 +12,7 @@ namespace StoreSteels.Services
     {
         public List<StoreProductModel> GetProducts(
             string searchKeyword = "",
-            string customer = "",
+            string category = "",
             string filterType = "",
             int skip = 0,
             int take = 300)
@@ -28,10 +28,10 @@ namespace StoreSteels.Services
                 ");
 
                 if (!string.IsNullOrEmpty(searchKeyword))
-                    sql.Append("AND (PartACode LIKE @key OR PartName LIKE @key OR PartNo LIKE @key) ");
+                    sql.Append("AND (PartCode LIKE @key OR PartName LIKE @key) ");
 
-                if (!string.IsNullOrEmpty(customer))
-                    sql.Append(" AND CustomerCode = @customer ");
+                if (!string.IsNullOrEmpty(category))
+                    sql.Append(" AND Category = @category ");
 
                 if (filterType == "OVER_MAX")
                 {
@@ -48,15 +48,15 @@ namespace StoreSteels.Services
                 ");
                 }
 
-                sql.Append("ORDER BY PartACode OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY");
+                sql.Append("ORDER BY PartCode OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY");
 
                 SqlCommand cmd = new SqlCommand(sql.ToString(), conn);
 
                 if (!string.IsNullOrEmpty(searchKeyword))
                     cmd.Parameters.AddWithValue("@key", "%" + searchKeyword + "%");
 
-                if (!string.IsNullOrEmpty(customer))
-                    cmd.Parameters.AddWithValue("@customer", customer);
+                if (!string.IsNullOrEmpty(category))
+                    cmd.Parameters.AddWithValue("@category", category);
 
                 cmd.Parameters.AddWithValue("@Skip", skip);
                 cmd.Parameters.AddWithValue("@Take", take);
@@ -72,20 +72,17 @@ namespace StoreSteels.Services
                         list.Add(new StoreProductModel
                         {
                             ID = (rowNumber++).ToString(),
-                            CustomerCode = rdr["CustomerCode"]?.ToString() ?? "",
-                            ModelCode = rdr["ModelCode"]?.ToString() ?? "",
+                            Category = rdr["Category"]?.ToString() ?? "",
+                            Supplier = rdr["Supplier"]?.ToString() ?? "",
                             ImageFileName = rdr["ImageFileName"]?.ToString() ?? "",
                             PartCode = rdr["PartCode"]?.ToString() ?? "",
-                            PartACode = rdr["PartACode"]?.ToString() ?? "",
-                            PartNo = rdr["PartNo"]?.ToString() ?? "",
                             PartName = rdr["PartName"]?.ToString() ?? "",
                             PackSize = rdr["PackSize"]?.ToString() ?? "",
                             Max = rdr["Max"]?.ToString() ?? "",
                             Min = rdr["Min"]?.ToString() ?? "",
-                            QtyStkb = rdr["QtyStkb"]?.ToString() ?? "",
-                            Stock = rdr["Stock"]?.ToString() ?? "",
+                            Qty = rdr["QtyStkb"]?.ToString() ?? "",
                             Remark = rdr["Remark"]?.ToString() ?? "",
-                            Category = rdr["Category"]?.ToString() ?? "",
+                            Bin = rdr["Bin"]?.ToString() ?? "",
 
                             // 👑 ใช้ TryParse แทน Convert.ToInt32 กัน FormatException
                             //    กรณี LIT_STAT เป็น string หรือ null ใน DB
@@ -103,7 +100,7 @@ namespace StoreSteels.Services
 
         #region === [ Update Product Master ] ===
 
-        public bool UpdateProductMaster(string partACode, string remark, int? max, int? min, double? qtyStkb, int? stock)
+        public bool UpdateProductMaster(string partCode, string remark, int? max, int? min, double? qty)
         {
             using (SqlConnection conn = new SqlConnection(GlobalConfig.ConnStr))
             {
@@ -111,19 +108,17 @@ namespace StoreSteels.Services
 
                 if (max.HasValue) sql.Append(", QTY_MAX = @max");
                 if (min.HasValue) sql.Append(", QTY_MIN = @min");
-                if (qtyStkb.HasValue) sql.Append(", QTY_STKB = @qtyStkb");
-                if (stock.HasValue) sql.Append(", QTY_STK = @stock");
+                if (qty.HasValue) sql.Append(", QTY_STKB = @qty");
 
-                sql.Append(" WHERE PT_ACODE = @code");
+                sql.Append(" WHERE PT_CODE = @code");
 
                 SqlCommand cmd = new SqlCommand(sql.ToString(), conn);
                 cmd.Parameters.AddWithValue("@remark", (object)remark ?? "");
-                cmd.Parameters.AddWithValue("@code", partACode);
+                cmd.Parameters.AddWithValue("@code", partCode);
 
                 if (max.HasValue) cmd.Parameters.AddWithValue("@max", max.Value);
                 if (min.HasValue) cmd.Parameters.AddWithValue("@min", min.Value);
-                if (qtyStkb.HasValue) cmd.Parameters.AddWithValue("@qtyStkb", qtyStkb.Value);
-                if (stock.HasValue) cmd.Parameters.AddWithValue("@stock", stock.Value);
+                if (qty.HasValue) cmd.Parameters.AddWithValue("@qty", qty.Value);
 
                 conn.Open();
                 cmd.ExecuteNonQuery();
@@ -135,16 +130,16 @@ namespace StoreSteels.Services
 
         #region === [ Update Remark ] ===
 
-        public bool UpdateRemark(string partACode, string remark)
+        public bool UpdateRemark(string partCode, string remark)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalConfig.ConnStr))
                 {
-                    string sql = "UPDATE MST_PART SET PT_REMARK = @remark WHERE PT_ACODE = @code";
+                    string sql = "UPDATE MST_PART SET PT_REMARK = @remark WHERE PT_CODE = @code";
                     SqlCommand cmd = new SqlCommand(sql, conn);
                     cmd.Parameters.AddWithValue("@remark", (object)remark ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@code", partACode);
+                    cmd.Parameters.AddWithValue("@code", partCode);
 
                     conn.Open();
                     cmd.ExecuteNonQuery();
@@ -160,30 +155,31 @@ namespace StoreSteels.Services
 
         #endregion
 
-        #region === [ Get Customers ] ===
+        #region === [ Get Categories ] ===
 
-        public List<string> GetCustomers()
+        // เดิมชื่อ GetCustomers() ดึง PT_CUST - schema ใหม่จัดกลุ่ม/กรองด้วย PT_CAT (ประเภท) แทน
+        public List<string> GetCategories()
         {
-            var customers = new List<string> { "ALL CUSTOMERS" };
+            var categories = new List<string> { "ALL CATEGORIES" };
             using (SqlConnection conn = new SqlConnection(GlobalConfig.ConnStr))
             {
-                string sql = @"SELECT DISTINCT PT_CUST 
-                       FROM MST_PART 
-                       WHERE IS_ACTIVE = 1 
-                         AND IS_SHOW_MST = 1 
-                         AND PT_CUST IS NOT NULL 
-                         AND PT_CUST <> '' 
-                       ORDER BY PT_CUST";
+                string sql = @"SELECT DISTINCT PT_CAT
+                       FROM MST_PART
+                       WHERE IS_ACTIVE = 1
+                         AND IS_SHOW_MST = 1
+                         AND PT_CAT IS NOT NULL
+                         AND PT_CAT <> ''
+                       ORDER BY PT_CAT";
 
                 SqlCommand cmd = new SqlCommand(sql, conn);
                 conn.Open();
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     while (rdr.Read())
-                        customers.Add(rdr["PT_CUST"].ToString());
+                        categories.Add(rdr["PT_CAT"].ToString());
                 }
             }
-            return customers;
+            return categories;
         }
 
         #endregion
@@ -198,16 +194,15 @@ namespace StoreSteels.Services
             using (SqlConnection conn = new SqlConnection(GlobalConfig.ConnStr))
             {
                 StringBuilder sql = new StringBuilder(@"
-                SELECT 
-                    PartACode,
-                    ISNULL([Max], 0)    AS [Max],
-                    ISNULL([Min], 0)    AS [Min],
-                    ISNULL(QtyStkb, 0)  AS QtyStkb,
-                    ISNULL(Stock, 0)    AS Stock,
+                SELECT
+                    PartCode,
+                    ISNULL([Max], 0)   AS [Max],
+                    ISNULL([Min], 0)   AS [Min],
+                    ISNULL(QtyStkb, 0) AS QtyStkb,
                     Remark,
                     StockStatus
                 FROM VW_StoreMonitoring
-                WHERE PartACode IN (");
+                WHERE PartCode IN (");
 
                 var paramNames = partCodes.Select((s, i) => $"@p{i}").ToList();
                 sql.Append(string.Join(",", paramNames));
@@ -225,11 +220,10 @@ namespace StoreSteels.Services
                     {
                         list.Add(new StoreProductModel
                         {
-                            PartACode = rdr["PartACode"]?.ToString() ?? "",
+                            PartCode = rdr["PartCode"]?.ToString() ?? "",
                             Max = rdr["Max"]?.ToString() ?? "0",
                             Min = rdr["Min"]?.ToString() ?? "0",
-                            QtyStkb = rdr["QtyStkb"]?.ToString() ?? "0",
-                            Stock = rdr["Stock"]?.ToString() ?? "0",
+                            Qty = rdr["QtyStkb"]?.ToString() ?? "0",
                             Remark = rdr["Remark"]?.ToString() ?? "",
                             StockStatus = rdr["StockStatus"]?.ToString() ?? "NORMAL"
                         });

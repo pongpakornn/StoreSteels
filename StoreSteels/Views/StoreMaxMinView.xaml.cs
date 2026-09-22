@@ -30,7 +30,7 @@ namespace StoreSteels.Views
         private StoreProductModel _originalData;
 
         // ตัวแปรระดับคลาสสำหรับเก็บค่าที่ส่งมาจาก Dashboard
-        private string _selectedCustomer;
+        private string _selectedCategory;
         private string _filterType;
 
         public StoreMaxMinView(UserSession session)
@@ -41,7 +41,7 @@ namespace StoreSteels.Views
             this.DataContext = _viewModel;
 
             this.Loaded += (s, e) => {
-                if (string.IsNullOrEmpty(_filterType) && string.IsNullOrEmpty(_selectedCustomer))
+                if (string.IsNullOrEmpty(_filterType) && string.IsNullOrEmpty(_selectedCategory))
                 {
                     _viewModel.LoadData();
                 }
@@ -58,14 +58,14 @@ namespace StoreSteels.Views
             RunEntryAnimation();
         }
 
-        public StoreMaxMinView(UserSession session, string customerCode, string filterType) : this(session)
+        public StoreMaxMinView(UserSession session, string categoryCode, string filterType) : this(session)
         {
-            _selectedCustomer = customerCode;
+            _selectedCategory = categoryCode;
             _filterType = filterType;
 
             if (_viewModel != null)
             {
-                _viewModel.SelectedCustomer = !string.IsNullOrEmpty(_selectedCustomer) ? _selectedCustomer : "ALL CUSTOMERS";
+                _viewModel.SelectedCategory = !string.IsNullOrEmpty(_selectedCategory) ? _selectedCategory : "ALL CATEGORIES";
                 _viewModel.SelectedFilterType = _filterType;
             }
         }
@@ -123,7 +123,7 @@ namespace StoreSteels.Views
 
         #region --- Filter Button Events ---
 
-        private void cbCustomer_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void cbCategory_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_viewModel == null) return;
             string searchKey = txtSearch != null ? txtSearch.Text : "";
@@ -151,7 +151,7 @@ namespace StoreSteels.Views
         private void btnShowAll_Click(object sender, RoutedEventArgs e)
         {
             _viewModel.SelectedFilterType = "";
-            _viewModel.SelectedCustomer = "ALL CUSTOMERS";
+            _viewModel.SelectedCategory = "ALL CATEGORIES";
             if (txtSearch != null) txtSearch.Text = "";
 
             _viewModel.LoadData("");
@@ -163,7 +163,11 @@ namespace StoreSteels.Views
 
         // ⏱️ ปรับค่าความเร็วในการเลื่อนทีละนิด (0.5 คือนุ่มนวล ค่อย ๆ ลงช้า ๆ ครับ)
         private double _scrollIncrement = 0.7;
-        private bool _isScrollingDown = true;
+
+        // 🔁 หมุนวนทิศทางเดียว (เลื่อนขึ้นต่อเนื่องเหมือนป้ายโฆษณา) แทนการเลื่อนขึ้น-ลงสลับไปมาแบบเดิม
+        // พอสุดล่างแล้วให้ตัดกลับขึ้นบนสุดทันที ไม่สลับทิศ
+        private int _loopPauseFrames = 0;
+        private const int LoopPauseFrameCount = 25; // หยุดพักสั้นๆ ที่จุดเริ่มต้นก่อนวนใหม่ (~1.5 วินาทีที่ 60ms/frame)
 
         private void InitializeAutoScroll()
         {
@@ -196,25 +200,20 @@ namespace StoreSteels.Views
             var scrollViewer = GetVisualChild<ScrollViewer>(dgStore);
             if (scrollViewer != null && scrollViewer.ScrollableHeight > 0)
             {
-                if (_isScrollingDown)
+                if (_loopPauseFrames > 0)
                 {
-                    _currentScrollOffset += _scrollIncrement;
-
-                    if (_currentScrollOffset >= scrollViewer.ScrollableHeight)
-                    {
-                        _currentScrollOffset = scrollViewer.ScrollableHeight;
-                        _isScrollingDown = false;
-                    }
+                    _loopPauseFrames--;
+                    return;
                 }
-                else
-                {
-                    _currentScrollOffset -= _scrollIncrement;
 
-                    if (_currentScrollOffset <= 0)
-                    {
-                        _currentScrollOffset = 0;
-                        _isScrollingDown = true;
-                    }
+                // เลื่อนขึ้นทิศทางเดียวต่อเนื่อง (ไม่สลับขึ้น-ลง) เหมือนป้ายโฆษณาหมุนวน
+                _currentScrollOffset += _scrollIncrement;
+
+                if (_currentScrollOffset >= scrollViewer.ScrollableHeight)
+                {
+                    // ถึงล่างสุดแล้ว วนกลับขึ้นบนสุดทันที แล้วหยุดพักสั้นๆ ก่อนเริ่มเลื่อนรอบใหม่
+                    _currentScrollOffset = 0;
+                    _loopPauseFrames = LoopPauseFrameCount;
                 }
 
                 scrollViewer.ScrollToVerticalOffset(_currentScrollOffset);
@@ -288,8 +287,6 @@ namespace StoreSteels.Views
             if (_isUserInteracting || chkAutoScroll.IsChecked != true)
             {
                 _currentScrollOffset = e.VerticalOffset;
-                if (e.VerticalChange > 0) _isScrollingDown = true;
-                if (e.VerticalChange < 0) _isScrollingDown = false;
             }
         }
 
@@ -300,12 +297,11 @@ namespace StoreSteels.Views
             {
                 _originalData = new StoreProductModel
                 {
-                    PartACode = p.PartACode,
+                    PartCode = p.PartCode,
                     Remark = p.Remark,
                     Max = p.Max,
                     Min = p.Min,
-                    QtyStkb = p.QtyStkb,
-                    Stock = p.Stock
+                    Qty = p.Qty
                 };
             }
 
