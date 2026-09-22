@@ -81,8 +81,7 @@ namespace StoreSteels.ViewModels
 
                     // 🎯 ตั้งชื่อไฟล์ใหม่ด้วย PartACode เพื่อป้องกันชื่อซ้ำ
                     string newFileName = SelectedProduct.PartACode + extension;
-                    string targetFolder = @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\ImageStore";
-                    //string targetFolder = @"C:\Users\pongp\Desktop\WorkMe\3. Project WPF\2. Program StoreSteels\1. ImageStore";
+                    string targetFolder = @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\Image";
 
                     if (!System.IO.Directory.Exists(targetFolder))
                         System.IO.Directory.CreateDirectory(targetFolder);

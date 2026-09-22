@@ -119,7 +119,7 @@ namespace StoreSteels.Models
                     return null;
 
                 return Path.Combine(
-                    @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\ImageStore",
+                    @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\Image",
                     ImageFileName
                 );
             }

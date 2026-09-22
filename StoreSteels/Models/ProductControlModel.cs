@@ -71,8 +71,7 @@ namespace StoreSteels.Models
                 if (Path.IsPathRooted(ImageFileName) && File.Exists(ImageFileName))
                     return ImageFileName;
 
-                //string baseFolder = @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\ImageStore";
-                string baseFolder = @"C:\Users\pongp\Desktop\WorkMe\3. Project WPF\2. Program StoreSteels\1. ImageStore";
+                string baseFolder = @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\Image";
                 string fullPath = Path.Combine(baseFolder, ImageFileName);
 
                 return File.Exists(fullPath) ? fullPath : null;

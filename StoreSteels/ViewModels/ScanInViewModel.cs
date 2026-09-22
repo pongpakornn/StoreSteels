@@ -465,7 +465,7 @@ namespace StoreSteels.ViewModels
                     ShowName = result.PartName;
                     ShowQty = result.Qty.ToString();
 
-                    string baseFolder = @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\ImageStore";
+                    string baseFolder = @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\Image";
                     string fileName = result.PartACode;
                     string imgPath = System.IO.Path.Combine(baseFolder, $"{fileName}.png");
 
