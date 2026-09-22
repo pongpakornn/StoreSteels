@@ -273,7 +273,7 @@
                 <DataGrid x:Name="dgPackingCards"
                           EnableRowVirtualization="False"
                           EnableColumnVirtualization="False"
-                          HorizontalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
                           ScrollViewer.CanContentScroll="False"
                           ScrollViewer.ScrollChanged="dgPackingCards_ScrollChanged"
                           ItemsSource="{Binding GroupedItems}"
@@ -326,13 +326,17 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="BILL NO." Binding="{Binding TicketNo}" Width="150" MinWidth="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="GROUP" Binding="{Binding GroupCode}" Width="80" MinWidth="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="PD CODE" Binding="{Binding MaterialCode}" Width="130" MinWidth="130" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty, StringFormat='{}{0:0.##}'}" Width="70" MinWidth="70" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="WORKORDER" Binding="{Binding WorkOrder}" Width="150" MinWidth="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="LOT" Binding="{Binding LotNo}" Width="80" MinWidth="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
-                        <DataGridTextColumn Header="REMARK" Binding="{Binding JobName}" Width="*" MinWidth="200" ElementStyle="{StaticResource WrapCellTextStyle}"/>
+                        <!-- คอลัมน์ข้อความหลักใช้ Width แบบ Star (เหมือน PD CODE/PRODUCT NAME/REMARK ในหน้า Store Max-Min)
+                             เพื่อให้กระจายพื้นที่ที่เหลือแล้วเต็มตารางพอดี แทน Fixed px เดิมที่ทำให้เกิด Scrollbar
+                             แนวนอนเวลาหน้าต่างกว้างกว่าผลรวมความกว้างคอลัมน์ ส่วนคอลัมน์รหัส/ตัวเลขสั้นๆ
+                             (GROUP/QTY/LOT) ยังคงเป็น Fixed px เหมือน MAX/MIN ในหน้า Store Max-Min -->
+                        <DataGridTextColumn Header="BILL NO." Binding="{Binding TicketNo}" Width="1.3*" MinWidth="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="GROUP" Binding="{Binding GroupCode}" Width="90" MinWidth="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="PD CODE" Binding="{Binding MaterialCode}" Width="1.1*" MinWidth="130" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="QTY" Binding="{Binding Qty, StringFormat='{}{0:0.##}'}" Width="80" MinWidth="70" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="WORKORDER" Binding="{Binding WorkOrder}" Width="1.3*" MinWidth="150" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="LOT" Binding="{Binding LotNo}" Width="90" MinWidth="80" ElementStyle="{StaticResource NoWrapCellTextStyle}"/>
+                        <DataGridTextColumn Header="REMARK" Binding="{Binding JobName}" Width="1.8*" MinWidth="200" ElementStyle="{StaticResource WrapCellTextStyle}"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
