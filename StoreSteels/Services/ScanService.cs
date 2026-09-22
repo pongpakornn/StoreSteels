@@ -97,7 +97,9 @@ namespace StoreSteels.Services
         // ✅ เพิ่มพารามิเตอร์ refNo = บาร์โค้ดดิบ "ทั้งชุด" ที่แสกนเนอร์ยิงเข้ามา เก็บลง REF_NO
         // schema ใหม่: MST_PART เหลือ QTY_STKB ตัวเดียว (ไม่มี QTY_STK แยกกล่อง/ชิ้นอีกต่อไป) - บวก/ลบ
         // ตรงๆ ด้วยจำนวนที่สแกนเข้ามาจริง (qty) แทนการ +1 กล่องแบบเดิม
-        public bool UpdateStock(int ptId, string partCode, string partACode, int qty, string userId, string refNo)
+        // txType: ปกติ "IN" (ค่า default คงพฤติกรรมเดิม) ใช้ "RETURN" สำหรับกรณีรับคืนเหล็กเหลือจากการผลิต
+        // เพื่อแยกสถานะออกจากการรับเข้าปกติใน TRN_SCAN (คอลัมน์ TX_TYPE เป็น varchar(20) รองรับได้สบาย)
+        public bool UpdateStock(int ptId, string partCode, string partACode, int qty, string userId, string refNo, string txType = "IN")
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -112,7 +114,7 @@ namespace StoreSteels.Services
 
                     // ✅ เพิ่มคอลัมน์ REF_NO
                     string insertLogSql = @"INSERT INTO TRN_SCAN (USR_ID, TX_QTY, TX_TYPE, TX_DATE, PT_ID, PT_ACODE, REF_NO)
-                                    VALUES (@UserId, @Qty, 'IN', GETDATE(), @PtId, @PtACode, @RefNo)";
+                                    VALUES (@UserId, @Qty, @TxType, GETDATE(), @PtId, @PtACode, @RefNo)";
 
                     using (SqlCommand cmdUpdate = new SqlCommand(updateSql, conn, trans))
                     {
@@ -125,6 +127,7 @@ namespace StoreSteels.Services
                     {
                         cmdLog.Parameters.AddWithValue("@UserId", userId);
                         cmdLog.Parameters.AddWithValue("@Qty", qty);
+                        cmdLog.Parameters.AddWithValue("@TxType", string.IsNullOrWhiteSpace(txType) ? "IN" : txType);
                         cmdLog.Parameters.AddWithValue("@PtId", ptId);
                         cmdLog.Parameters.AddWithValue("@PtACode", string.IsNullOrWhiteSpace(partACode) ? DBNull.Value : (object)partACode.Trim());
 

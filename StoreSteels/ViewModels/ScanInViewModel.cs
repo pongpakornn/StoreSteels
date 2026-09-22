@@ -331,6 +331,34 @@ namespace StoreSteels.ViewModels
         public ICommand ToggleTestModeCommand { get; }
         #endregion
 
+        #region Mode Return (คืนเหล็ก) Properties
+        // 🔄 โหมดคืนเหล็กที่เหลือจากการผลิตกลับเข้าคลัง: สแกน QR ที่ Export มาจากหน้า ProductControl
+        // (รูปแบบ ProductCode|ProductName) แล้วเด้ง Popup ให้กรอกจำนวนรับคืนเอง แทนที่จะรับเข้าตาม
+        // Packsize มาตรฐานแบบการสแกนปกติ กดปุ่มซ้ำเพื่อยกเลิกโหมดกลับไปสแกนแบบปกติ
+        private bool _isReturnMode = false;
+        public bool IsReturnMode
+        {
+            get => _isReturnMode;
+            set
+            {
+                _isReturnMode = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ReturnButtonText));
+                OnPropertyChanged(nameof(ReturnButtonBackground));
+                OnPropertyChanged(nameof(ReturnBannerVisibility));
+            }
+        }
+
+        public string ReturnButtonText => IsReturnMode ? "ยกเลิกการคืนเหล็ก" : "คืนเหล็ก";
+        public System.Windows.Media.Brush ReturnButtonBackground => IsReturnMode
+            ? (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFrom("#D32F2F") // สีแดงเมื่อกำลังอยู่ในโหมด (กดซ้ำ = ยกเลิก)
+            : (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFrom("#0288D1"); // สีฟ้าโหมดปกติ
+
+        public Visibility ReturnBannerVisibility => IsReturnMode ? Visibility.Visible : Visibility.Collapsed;
+
+        public ICommand ToggleReturnModeCommand { get; }
+        #endregion
+
         #region Properties สำหรับผูกกับ UI
         private System.Windows.Media.ImageSource _showProductImage;
         public System.Windows.Media.ImageSource ShowProductImage
@@ -363,12 +391,18 @@ namespace StoreSteels.ViewModels
         public ScanInViewModel()
         {
             ToggleTestModeCommand = new RelayCommand(p => ExecuteToggleTestMode());
+            ToggleReturnModeCommand = new RelayCommand(p => ExecuteToggleReturnMode());
             LoadTodayData();
         }
 
         private void ExecuteToggleTestMode()
         {
             IsTestMode = !IsTestMode;
+        }
+
+        private void ExecuteToggleReturnMode()
+        {
+            IsReturnMode = !IsReturnMode;
         }
 
         private async void LoadTodayData()
@@ -383,7 +417,7 @@ namespace StoreSteels.ViewModels
                     HistoryItems.Clear();
                     foreach (var item in data)
                     {
-                        if (item.Status == "IN")
+                        if (item.Status == "IN" || item.Status == "RETURN")
                         {
                             ScannedItems.Insert(0, item);
                         }
@@ -400,6 +434,14 @@ namespace StoreSteels.ViewModels
         public async Task ProcessScan(string inputCode)
         {
             if (string.IsNullOrWhiteSpace(inputCode) || CurrentUser == null) return;
+
+            // 🔄 โหมดคืนเหล็ก: ตัดออกจาก flow ปกติทั้งหมด ใช้ QR รูปแบบ Export จากหน้า ProductControl
+            // (ProductCode|ProductName) แทน แล้วเด้ง Popup ให้กรอกจำนวนรับคืนเอง
+            if (IsReturnMode)
+            {
+                await ProcessReturnScan(inputCode);
+                return;
+            }
 
             string finalSearchCode = inputCode.Trim();
             string rawBarcodeFull = finalSearchCode;
@@ -465,43 +507,7 @@ namespace StoreSteels.ViewModels
                     ShowName = result.PartName;
                     ShowQty = result.Qty.ToString();
 
-                    string baseFolder = @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\Image";
-                    string fileName = result.PartACode;
-                    string imgPath = System.IO.Path.Combine(baseFolder, $"{fileName}.png");
-
-                    if (!System.IO.File.Exists(imgPath))
-                        imgPath = System.IO.Path.Combine(baseFolder, $"{fileName}.jpg");
-
-                    if (!System.IO.File.Exists(imgPath))
-                        imgPath = System.IO.Path.Combine(baseFolder, "no-image.png");
-
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            if (System.IO.File.Exists(imgPath))
-                            {
-                                var bitmap = new System.Windows.Media.Imaging.BitmapImage();
-                                bitmap.BeginInit();
-                                bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                                bitmap.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreImageCache;
-                                bitmap.UriSource = new Uri(imgPath, UriKind.Absolute);
-                                bitmap.EndInit();
-                                bitmap.Freeze();
-
-                                ShowProductImage = bitmap;
-                            }
-                            else
-                            {
-                                ShowProductImage = null;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Load Image Error: {ex.Message}");
-                            ShowProductImage = null;
-                        }
-                    });
+                    LoadProductImage(result.PartACode);
 
                     var newItem = new ScanItemModel
                     {
@@ -550,6 +556,149 @@ namespace StoreSteels.ViewModels
             }
         }
 
+        // ดึงรูปสินค้าจาก Shared Folder มาแสดงที่ ShowProductImage (ใช้ร่วมกันทั้งสแกนปกติและคืนเหล็ก)
+        private void LoadProductImage(string partACode)
+        {
+            string baseFolder = @"\\192.168.10.56\ProgramCHR\2. Store Only\StoreSteels\Image";
+            string fileName = partACode;
+            string imgPath = System.IO.Path.Combine(baseFolder, $"{fileName}.png");
+
+            if (!System.IO.File.Exists(imgPath))
+                imgPath = System.IO.Path.Combine(baseFolder, $"{fileName}.jpg");
+
+            if (!System.IO.File.Exists(imgPath))
+                imgPath = System.IO.Path.Combine(baseFolder, "no-image.png");
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    if (System.IO.File.Exists(imgPath))
+                    {
+                        var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        bitmap.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreImageCache;
+                        bitmap.UriSource = new Uri(imgPath, UriKind.Absolute);
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+
+                        ShowProductImage = bitmap;
+                    }
+                    else
+                    {
+                        ShowProductImage = null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Load Image Error: {ex.Message}");
+                    ShowProductImage = null;
+                }
+            });
+        }
+
+        // ตัด Product Code ออกจาก QR ที่ Export มาจากหน้า ProductControl (รูปแบบ "ProductCode|ProductName")
+        // เผื่อกรณีไม่มี "|" (เช่น พิมพ์รหัสตรงๆ) ให้ใช้ค่าที่ trim แล้วทั้งก้อนแทน
+        private static string ExtractReturnScanCode(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+            string trimmed = raw.Trim();
+            int pipeIndex = trimmed.IndexOf('|');
+            return pipeIndex >= 0 ? trimmed.Substring(0, pipeIndex).Trim() : trimmed;
+        }
+
+        // 🔄 [โหมดคืนเหล็ก] สแกน QR Export จากหน้า ProductControl -> ค้นหาสินค้า -> เด้ง Popup กรอกจำนวนรับคืน
+        // -> ยืนยันแล้วอัปเดต QTY_STKB ตามจำนวนที่กรอกเอง (ไม่ใช่ Packsize มาตรฐาน) พร้อม tag สถานะ "RETURN"
+        private async Task ProcessReturnScan(string inputCode)
+        {
+            string rawBarcodeFull = inputCode.Trim();
+            string uid = CurrentUser.UserId;
+            string code = ExtractReturnScanCode(rawBarcodeFull);
+
+            try
+            {
+                var part = await Task.Run(() => _scanService.GetPartByScan(code));
+
+                if (part == null)
+                {
+                    DialogHelper.ShowError($"[รายการไม่สำเร็จ] ไม่พบข้อมูลสินค้าในระบบสำหรับคืนเหล็ก\nCode: {code}");
+                    return;
+                }
+
+                int? enteredQty = DialogHelper.ShowQuantityInput(
+                    $"{part.PartName}\nProduct Code: {part.PartCode}\n\nกรุณากรอกจำนวนที่รับคืนเข้าคลัง",
+                    "คืนเหล็กเข้าคลัง");
+
+                if (enteredQty == null || enteredQty.Value <= 0)
+                    return; // ผู้ใช้กด Cancel หรือปิดหน้าต่าง - ไม่ทำอะไรต่อ
+
+                int qty = enteredQty.Value;
+                bool isSaved = true;
+
+                if (!IsTestMode)
+                {
+                    isSaved = await Task.Run(() =>
+                        _scanService.UpdateStock(part.PartId, part.PartCode, part.PartACode, qty, uid, rawBarcodeFull, "RETURN"));
+
+                    if (isSaved)
+                    {
+                        LogService.WriteScanLog(uid, "SCAN_RETURN", part.PartCode, part.PartACode, qty);
+                    }
+                    else
+                    {
+                        DialogHelper.ShowError("บันทึกการคืนเหล็กไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+                        return;
+                    }
+                }
+
+                ShowCode = part.PartACode;
+                ShowName = part.PartName;
+                ShowQty = qty.ToString();
+
+                LoadProductImage(part.PartACode);
+
+                var newItem = new ScanItemModel
+                {
+                    PartId = part.PartId,
+                    PartCode = part.PartCode,
+                    PartName = part.PartName,
+                    PartNo = part.PartNo,
+                    PartACode = part.PartACode,
+                    Qty = qty,
+                    Status = IsTestMode ? "TEST" : "RETURN",
+                    UpdateTime = DateTime.Now,
+                    ProductImagePath = ShowProductImage
+                };
+
+                if (IsTestMode)
+                {
+                    TestScannedItems.Insert(0, newItem);
+                    if (TestScannedItems.Count > 12)
+                    {
+                        TestScannedItems.RemoveAt(TestScannedItems.Count - 1);
+                    }
+                }
+                else
+                {
+                    ScannedItems.Insert(0, newItem);
+                    if (ScannedItems.Count > 12)
+                    {
+                        ScannedItems.RemoveAt(ScannedItems.Count - 1);
+                    }
+                    UpdateSummary(newItem);
+                }
+            }
+            catch (Exception ex)
+            {
+                DialogHelper.ShowError("เกิดข้อผิดพลาด: " + ex.Message);
+            }
+            finally
+            {
+                BarcodeInput = string.Empty;
+            }
+        }
+
         private void UpdateSummary(ScanItemModel item)
         {
             if (string.IsNullOrWhiteSpace(item.PartACode)) return;
@@ -566,7 +715,8 @@ namespace StoreSteels.ViewModels
                 if (string.IsNullOrEmpty(existing.PartName) && !string.IsNullOrEmpty(item.PartName))
                     existing.PartName = item.PartName;
 
-                if (item.Status == "IN")
+                // การคืนเหล็ก (RETURN) นับรวมเป็นยอดรับเข้าเหมือน IN ในตารางสรุปนี้ เพราะเป็นการเพิ่มสต็อกเข้าคลังเช่นกัน
+                if (item.Status == "IN" || item.Status == "RETURN")
                 {
                     existing.InCount += 1;
                     existing.TotalInQty += item.Qty;
@@ -588,8 +738,8 @@ namespace StoreSteels.ViewModels
                     PartName = item.PartName,
                     PartACode = item.PartACode,
                     PartNo = item.PartNo,
-                    InCount = item.Status == "IN" ? 1 : 0,
-                    TotalInQty = item.Status == "IN" ? item.Qty : 0,
+                    InCount = (item.Status == "IN" || item.Status == "RETURN") ? 1 : 0,
+                    TotalInQty = (item.Status == "IN" || item.Status == "RETURN") ? item.Qty : 0,
                     OutCount = item.Status == "OUT" ? 1 : 0,
                     TotalOutQty = item.Status == "OUT" ? item.Qty : 0,
                     FinalStock = actualCurrentStock,

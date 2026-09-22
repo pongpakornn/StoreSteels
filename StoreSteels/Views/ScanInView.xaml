@@ -697,14 +697,27 @@
                         <Border Background="#ED6C02" CornerRadius="8" Padding="10,4" Height="28" VerticalAlignment="Center" Visibility="{Binding TestBannerVisibility}">
                             <TextBlock Text="⚠️ TEST MODE ACTIVE (บันทึกลอย)" Foreground="White" FontWeight="Bold" FontSize="12"/>
                         </Border>
+
+                        <!-- 🔄 ป้ายไฟแจ้งเตือนโหมดคืนเหล็ก -->
+                        <Border Background="#0288D1" CornerRadius="8" Padding="10,4" Height="28" VerticalAlignment="Center" Margin="8,0,0,0" Visibility="{Binding ReturnBannerVisibility}">
+                            <TextBlock Text="🔄 RETURN MODE ACTIVE (คืนเหล็ก)" Foreground="White" FontWeight="Bold" FontSize="12"/>
+                        </Border>
                     </StackPanel>
 
-                    <!-- 🚀 ปุ่มสลับโหมด Test / ยกเลิก Test -->
-                    <Button Grid.Column="1" Content="{Binding TestButtonText}" 
-                            Command="{Binding ToggleTestModeCommand}"
-                            Background="{Binding TestButtonBackground}" 
-                            Style="{StaticResource AnimatedButton}" 
-                            Width="160" Height="38" FontSize="13"/>
+                    <!-- 🔄 ปุ่มสลับโหมดคืนเหล็ก / ยกเลิกการคืนเหล็ก + ปุ่มสลับโหมด Test / ยกเลิก Test -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="{Binding ReturnButtonText}"
+                                Command="{Binding ToggleReturnModeCommand}"
+                                Background="{Binding ReturnButtonBackground}"
+                                Style="{StaticResource AnimatedButton}"
+                                Width="160" Height="38" FontSize="13" Margin="0,0,10,0"/>
+
+                        <Button Content="{Binding TestButtonText}"
+                                Command="{Binding ToggleTestModeCommand}"
+                                Background="{Binding TestButtonBackground}"
+                                Style="{StaticResource AnimatedButton}"
+                                Width="160" Height="38" FontSize="13"/>
+                    </StackPanel>
                 </Grid>
 
                 <Separator Background="#EEE" Margin="0,5,0,0" Height="1.5"/>
@@ -819,11 +832,35 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="PRODUCT CODE" Binding="{Binding PartACode}" Width="1.8*" ElementStyle="{StaticResource CenterBoldColumnStyle}"/>
                             <DataGridTextColumn Header="QTY" Binding="{Binding Qty}" Width="0.8*" ElementStyle="{StaticResource CenterBoldColumnStyle}"/>
+                            <!-- สถานะ: IN (ปกติ) กับ RETURN (คืนเหล็ก) - แยกสีให้ดูออกชัดเจน -->
                             <DataGridTemplateColumn Header="STATUS" Width="0.8*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border CornerRadius="15" Padding="13,6" Background="#E8F5E9" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <TextBlock Text="IN" Foreground="{StaticResource SuccessGreen}" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center"/>
+                                        <Border CornerRadius="15" Padding="13,6" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#E8F5E9"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="RETURN">
+                                                            <Setter Property="Background" Value="#E1F5FE"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock FontWeight="Bold" FontSize="13" HorizontalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="IN"/>
+                                                        <Setter Property="Foreground" Value="{StaticResource SuccessGreen}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Status}" Value="RETURN">
+                                                                <Setter Property="Text" Value="คืน"/>
+                                                                <Setter Property="Foreground" Value="#0288D1"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </Border>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

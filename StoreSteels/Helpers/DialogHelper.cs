@@ -44,6 +44,15 @@ namespace StoreSteels.Helpers
             win.ShowDialog();
         }
 
+        // 5. สำหรับกรอกจำนวน (ใช้กับ "คืนเหล็ก" ในหน้า Multi-Scanner) - คืนค่า null เมื่อกด Cancel
+        public static int? ShowQuantityInput(string message, string title = "ENTER QUANTITY")
+        {
+            var win = new QuantityInputDialog(title, message);
+            SetOwner(win);
+            bool? result = win.ShowDialog();
+            return result == true ? win.Quantity : (int?)null;
+        }
+
         // Helper สำหรับจัดหน้าต่างให้อยู่กึ่งกลางโปรแกรมหลัก
         private static void SetOwner(Window win)
         {
