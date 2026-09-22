@@ -146,8 +146,7 @@ namespace StoreSteels.Services
     string uid,
     string imageFileName,
     string customerCode,
-    string modelCode,
-    string partNo
+    string location
 )
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -167,7 +166,8 @@ namespace StoreSteels.Services
                                      PT_QR = @QR,
                                      PT_CAT = @Cat,
                                      PT_IMG = @ImageFileName,
-                                     PT_SUPPLIER = @CustomerCode
+                                     PT_SUPPLIER = @CustomerCode,
+                                     PT_BIN = @Location
                                      WHERE PT_CODE = @OldACode";
 
                         using (SqlCommand cmd = new SqlCommand(updateSql, conn, trans))
@@ -180,6 +180,7 @@ namespace StoreSteels.Services
                             cmd.Parameters.AddWithValue("@OldACode", oldACode);
                             cmd.Parameters.AddWithValue("@ImageFileName", (object)imageFileName ?? DBNull.Value);
                             cmd.Parameters.AddWithValue("@CustomerCode", (object)customerCode ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Location", (object)location ?? DBNull.Value);
 
                             await cmd.ExecuteNonQueryAsync();
                         }
@@ -198,7 +199,7 @@ namespace StoreSteels.Services
         }
 
         // เพิ่มข้อมูลใหม่ (INSERT)
-        public async Task<bool> InsertNewPartAsync(string code, string name, int psz, string qrContent, int max, int min, string category, string imageFileName, string customerCode, string modelCode, string partACode, string partNo)
+        public async Task<bool> InsertNewPartAsync(string code, string name, int psz, string qrContent, int max, int min, string category, string imageFileName, string customerCode, string location)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -216,7 +217,7 @@ namespace StoreSteels.Services
                                      )
                                      VALUES (
                                         @Code, @Name, @Psz, @QR, @Max, @Min, @Cat,
-                                        'N/A', 0, 1, 1, @ImageFileName,
+                                        @Location, 0, 1, 1, @ImageFileName,
                                         @CustomerCode
                                      )";
 
@@ -231,6 +232,7 @@ namespace StoreSteels.Services
                             cmd.Parameters.AddWithValue("@Cat", category ?? "GENERAL");
                             cmd.Parameters.AddWithValue("@ImageFileName", (object)imageFileName ?? DBNull.Value);
                             cmd.Parameters.AddWithValue("@CustomerCode", (object)customerCode ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Location", string.IsNullOrWhiteSpace(location) ? "N/A" : location);
 
                             await cmd.ExecuteNonQueryAsync();
                         }

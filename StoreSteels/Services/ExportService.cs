@@ -12,6 +12,14 @@ namespace StoreSteels.Services
 {
     public class ExportService
     {
+        // QuestPDF (ตั้งแต่ 2023.4) บังคับต้อง declare license ก่อนสร้างเอกสารใดๆ ไม่งั้นจะโยน exception
+        // ตอนรันจริงทุกครั้งที่กด Export - ใช้ static constructor เพื่อให้ตั้งค่าแค่ครั้งเดียวต่อการรันโปรแกรม
+        // Community tier ใช้ได้ฟรีสำหรับองค์กรที่มีรายได้รวมต่อปีต่ำกว่า 1 ล้านดอลลาร์
+        static ExportService()
+        {
+            QuestPDF.Settings.License = LicenseType.Community;
+        }
+
         public void GenerateA4Pdf(List<ProductControlModel> items)
         {
             // กำหนด Path ไปยัง Desktop (Dynamic สำหรับทุกเครื่อง)
@@ -35,29 +43,25 @@ namespace StoreSteels.Services
                             grid.Columns(4);
                             foreach (var item in items)
                             {
-                                grid.Item().AlignCenter().Padding(5).Column(col =>
+                                // ✅ .ShowEntire() บังคับให้ทั้งกลุ่ม (QR + รหัส + ชื่อ) เรนเดอร์เป็นก้อนเดียว
+                                // ถ้าพื้นที่ที่เหลือในหน้าปัจจุบันไม่พอ จะข้ามทั้งกลุ่มไปหน้าถัดไปแทนที่จะตัดขาดครึ่ง
+                                grid.Item().ShowEntire().AlignCenter().Padding(5).Column(col =>
                                 {
-                                    // ✅ รวมข้อมูลตาม Format ที่นนท์ต้องการให้เหมือน Log
-                                    // ใช้ ?? เพื่อใส่ค่าว่าง (N/A หรือ 0) กันพังกรณีข้อมูลใน DB เป็น Null
-                                    // แก้ไขใน ExportService.cs
-                                    // รูปแบบ: Category | PartCode | PartName | PackSize | Stock (หรือข้อมูลอื่นๆ ที่ระบบสแกนต้องการ)
-                                    string fullDetailForQR = $"{item.Category ?? "N/A"}|" +
-                                                             $"{item.PartCode ?? "N/A"}|" +
-                                                             $"{item.PartName ?? "N/A"}|" +
-                                                             $"{item.PackSize ?? "0"}|" +
-                                                             $"{item.Stock ?? "0"}";
+                                    // QR นี้ไม่ได้บันทึกลง Database - เป็น QR เฉพาะสำหรับ "คืนเหล็กที่เหลือจากการผลิต"
+                                    // เข้ารหัสแค่ Product Code | Product Name ตามที่ต้องการ
+                                    string qrContent = $"{item.PartCode ?? "N/A"}|{item.PartName ?? "N/A"}";
 
                                     // สร้าง QR Code (ใช้ ECCLevel.M เพื่อให้สแกนง่ายในขณะที่ข้อมูลค่อนข้างยาว)
-                                    QRCodeData qrCodeData = qrGenerator.CreateQrCode(fullDetailForQR, QRCodeGenerator.ECCLevel.M);
+                                    QRCodeData qrCodeData = qrGenerator.CreateQrCode(qrContent, QRCodeGenerator.ECCLevel.M);
                                     PngByteQRCode qrCode = new PngByteQRCode(qrCodeData);
                                     byte[] qrBytes = qrCode.GetGraphic(20);
 
-                                    // 1. แสดงรูป QR Code
+                                    // 1. แสดงรูป QR Code (ขนาดเท่าเดิม จัดกึ่งกลาง)
                                     col.Item().Width(85).AlignCenter().Image(qrBytes);
 
-                                    // 2. แสดงรหัสและชื่อใต้ภาพเพื่อให้คนอ่านออกด้วย
-                                    col.Item().AlignCenter().PaddingTop(2).Text(item.PartCode).Bold().FontSize(9);
-                                    col.Item().AlignCenter().Text(item.PartName).FontSize(7).FontColor(Colors.Grey.Medium);
+                                    // 2. แสดง Product Code แล้วตามด้วย Product Name บรรทัดถัดไป จัดกึ่งกลางใต้ QR พอดี
+                                    col.Item().Width(85).AlignCenter().PaddingTop(2).Text(item.PartCode).Bold().FontSize(9);
+                                    col.Item().Width(85).AlignCenter().Text(item.PartName).FontSize(7).FontColor(Colors.Grey.Medium);
 
                                     col.Item().PaddingBottom(15);
                                 });

@@ -190,16 +190,19 @@
             // --- UI Helpers ---
             private ProductControlModel GetModelFromInputs()
             {
+                // schema ใหม่ตัด PT_ACODE/PT_MODEL/PT_NO ออกจาก MST_PART แล้ว PT_CODE เป็นตัวระบุหลักตัวเดียว
+                // PartACode จึงมิเรอร์ค่าจาก PartCode เพื่อให้ logic เดิมที่อ้างอิง PartACode (lookup แถว, edit, delete) ยังทำงานถูกต้อง
+                string code = txtProductCode.Text.Trim();
                 return new ProductControlModel
                 {
-                    CustomerCode = txtCustomer.Text.Trim(),
+                    CustomerCode = txtSupplier.Text.Trim(),
                     Category = txtCategory.Text.Trim(),
-                    ModelCode = txtModel.Text.Trim(),
-                    PartCode = txtProductCode.Text.Trim(),
-                    PartACode = txtPartA.Text.Trim(),
-                    PartNo = txtPartNo.Text.Trim(),
+                    PartCode = code,
+                    PartACode = code,
                     PartName = txtProductName.Text.Trim(),
                     PackSize = txtPcs.Text.Trim(),
+                    Location = txtBin.Text.Trim(),
+                    QRCodeData = txtQRCode.Text.Trim(),
                     ImageFileName = _viewModel.SelectedProduct?.ImageFileName
                 };
             }
@@ -213,14 +216,13 @@
         private void ClearOnlyInputs()
         {
             // เคลียร์ TextBox
-            txtCustomer.Clear();
+            txtSupplier.Clear();
             txtCategory.Clear();
-            txtModel.Clear();
             txtProductCode.Clear();
-            txtPartA.Clear();
-            txtPartNo.Clear();
             txtProductName.Clear();
             txtPcs.Clear();
+            txtBin.Clear();
+            txtQRCode.Clear();
 
             // 🎯 หัวใจสำคัญ: สร้างตัวใหม่ไปเลย เพื่อตัดความสัมพันธ์กับ Row เดิมในตาราง
             _viewModel.SelectedProduct = new ProductControlModel();
@@ -241,16 +243,15 @@
             {
                 CustomerCode = model.CustomerCode,
                 Category = model.Category,
-                ModelCode = model.ModelCode,
                 PartCode = model.PartCode,
                 PartACode = model.PartACode,
-                PartNo = model.PartNo,
                 PartName = model.PartName,
                 PackSize = model.PackSize,
+                Location = model.Location,
+                QRCodeData = model.QRCodeData,
                 ImageFileName = model.ImageFileName
                 // ถ้ามี Field อื่นให้เพิ่มตรงนี้
             };
-            txtCustomer.Text = _viewModel.SelectedProduct.CustomerCode;
         }
 
                 private void SetEditMode(bool isEdit)
@@ -345,7 +346,7 @@
                         LogService.WriteLog(currentUserId, "EXPORT_QR_PDF", $"Exported QR Code to PDF for Part: {item.PartName}", item.PartCode);
                     }
 
-                    DialogHelper.ShowSuccess("ส่งออกไฟล์ไปที่โฟลเดอร์ Tools เรียบร้อยแล้ว!");
+                    DialogHelper.ShowSuccess("ส่งออกไฟล์ QR ไปที่โฟลเดอร์ Desktop\\StoreSteels_Export เรียบร้อยแล้ว!");
                 }
                 catch (Exception ex)
                 {

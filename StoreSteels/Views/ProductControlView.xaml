@@ -150,8 +150,8 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="5">
-                            <TextBlock Text="CUSTOMER" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
-                            <TextBox x:Name="txtCustomer" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.CustomerCode, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="SUPPLIER" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
+                            <TextBox x:Name="txtSupplier" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.CustomerCode, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="0" Grid.Column="1" Margin="5">
@@ -160,33 +160,28 @@
                         </StackPanel>
 
                         <StackPanel Grid.Row="0" Grid.Column="2" Margin="5">
-                            <TextBlock Text="MODEL" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
-                            <TextBox x:Name="txtModel" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.ModelCode, UpdateSourceTrigger=PropertyChanged}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="0" Grid.Column="3" Margin="5">
                             <TextBlock Text="PRODUCT CODE" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
                             <TextBox x:Name="txtProductCode" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.PartCode, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="5">
-                            <TextBlock Text="PART A" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
-                            <TextBox x:Name="txtPartA" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.PartACode, UpdateSourceTrigger=PropertyChanged}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="5">
-                            <TextBlock Text="PART NO" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
-                            <TextBox x:Name="txtPartNo" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.PartNo, UpdateSourceTrigger=PropertyChanged}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="5">
-                            <TextBlock Text="PART NAME" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
+                        <StackPanel Grid.Row="0" Grid.Column="3" Margin="5">
+                            <TextBlock Text="PRODUCT NAME" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
                             <TextBox x:Name="txtProductName" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.PartName, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="5">
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="5">
                             <TextBlock Text="PACKSIZE" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
                             <TextBox x:Name="txtPcs" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.PackSize, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="5">
+                            <TextBlock Text="BIN" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
+                            <TextBox x:Name="txtBin" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.Location, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="5">
+                            <TextBlock Text="QRCODE" FontSize="14" FontWeight="UltraBold" Foreground="{StaticResource CyberPurple}" Margin="0,0,0,5"/>
+                            <TextBox x:Name="txtQRCode" FontSize="13" FontWeight="Bold" Style="{StaticResource ModernInput}" Text="{Binding SelectedProduct.QRCodeData, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                     </Grid>
 
@@ -218,7 +213,7 @@
                     </Button>
                 </StackPanel>
 
-                <Button Grid.Column="1" Content="EXPORT SELECTED (PDF)" Style="{StaticResource CyberButton}" Width="200" Height="45" Click="Export_Click" FontSize="12" FontWeight="ExtraBold" />
+                <Button Grid.Column="1" Content="EXPORT QR SELECT" Style="{StaticResource CyberButton}" Width="200" Height="45" Click="Export_Click" FontSize="12" FontWeight="ExtraBold" />
             </Grid>
 
             <Border Grid.Row="3" CornerRadius="20" Background="#FDFDFD" BorderBrush="#F0F0F0" BorderThickness="1" ClipToBounds="True">
@@ -283,14 +278,13 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="CUSTOMER" Binding="{Binding CustomerCode}" Width="1*"/>
+                        <DataGridTextColumn Header="SUPPLIER" Binding="{Binding CustomerCode}" Width="1*"/>
                         <DataGridTextColumn Header="CATEGORY" Binding="{Binding Category}" Width="1*"/>
-                        <DataGridTextColumn Header="MODEL" Binding="{Binding ModelCode}" Width="1*"/>
-                        <DataGridTextColumn Header="PART CODE" Binding="{Binding PartCode}" Width="1.2*"/>
-                        <DataGridTextColumn Header="PART A" Binding="{Binding PartACode}" Width="1*"/>
-                        <DataGridTextColumn Header="PART NO" Binding="{Binding PartNo}" Width="1.2*"/>
-                        <DataGridTextColumn Header="PART NAME" Binding="{Binding PartName}" Width="2*"/>
+                        <DataGridTextColumn Header="PRODUCT CODE" Binding="{Binding PartCode}" Width="1.2*"/>
+                        <DataGridTextColumn Header="PRODUCT NAME" Binding="{Binding PartName}" Width="2*"/>
                         <DataGridTextColumn Header="PACKSIZE" Binding="{Binding PackSize}" Width="0.8*"/>
+                        <DataGridTextColumn Header="BIN" Binding="{Binding Location}" Width="1*"/>
+                        <DataGridTextColumn Header="QRCODE" Binding="{Binding QRCodeData}" Width="1.2*"/>
 
                         <DataGridTemplateColumn Header="ACTION" Width="260">
                             <DataGridTemplateColumn.CellTemplate>

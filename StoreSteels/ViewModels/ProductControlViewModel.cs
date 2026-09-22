@@ -238,8 +238,7 @@ namespace StoreSteels.ViewModels
                     uid,
                     model.ImageFileName,
                     model.CustomerCode,
-                    model.ModelCode,
-                    model.PartNo
+                    model.Location
                 );
 
                 if (success && targetRow != null)
@@ -250,7 +249,6 @@ namespace StoreSteels.ViewModels
                         model.IsShow = targetRow.IsShow;
                         model.Stock = targetRow.Stock;
                         model.IsActive = targetRow.IsActive;
-                        model.Location = targetRow.Location;
 
                         Products.RemoveAt(index);
                         Products.Insert(index, model);
@@ -269,14 +267,13 @@ namespace StoreSteels.ViewModels
         {
             var diffs = new List<string>();
 
-            if (oldVal.PartACode != newVal.PartACode) diffs.Add($"PACODE: {oldVal.PartACode}->{newVal.PartACode}");
             if (oldVal.PartCode != newVal.PartCode) diffs.Add($"PDCODE: {oldVal.PartCode}->{newVal.PartCode}");
             if (oldVal.PartName != newVal.PartName) diffs.Add($"PTNAME: {oldVal.PartName}->{newVal.PartName}");
             if (oldVal.PackSize != newVal.PackSize) diffs.Add($"PZ: {oldVal.PackSize}->{newVal.PackSize}");
             if (oldVal.Category != newVal.Category) diffs.Add($"CAT: {oldVal.Category}->{newVal.Category}");
-            if (oldVal.CustomerCode != newVal.CustomerCode) diffs.Add($"CUST: {oldVal.CustomerCode}->{newVal.CustomerCode}");
-            if (oldVal.ModelCode != newVal.ModelCode) diffs.Add($"MODEL: {oldVal.ModelCode}->{newVal.ModelCode}");
-            if (oldVal.PartNo != newVal.PartNo) diffs.Add($"PTNO: {oldVal.PartNo}->{newVal.PartNo}");
+            if (oldVal.CustomerCode != newVal.CustomerCode) diffs.Add($"SUPPLIER: {oldVal.CustomerCode}->{newVal.CustomerCode}");
+            if (oldVal.Location != newVal.Location) diffs.Add($"BIN: {oldVal.Location}->{newVal.Location}");
+            if (oldVal.QRCodeData != newVal.QRCodeData) diffs.Add($"QR: {oldVal.QRCodeData}->{newVal.QRCodeData}");
 
             return diffs.Count > 0 ? string.Join("  |  ", diffs) : null;
         }
@@ -305,12 +302,12 @@ namespace StoreSteels.ViewModels
                     return false;
                 }
 
-                string fullDetail = $"CUST: {model.CustomerCode}  | CAT: {model.Category}  | MODEL: {model.ModelCode}  | PDCODE : {model.PartCode}  | ACODE: {model.PartACode}  | PTNO: {model.PartNo}  | PDNAME: {model.PartName}  | PZ : {psz}";
+                string fullDetail = $"SUPPLIER: {model.CustomerCode}  | CAT: {model.Category}  | PDCODE : {model.PartCode}  | BIN: {model.Location}  | PDNAME: {model.PartName}  | PZ : {psz}";
                 LogService.WriteLog(uid, "REGISTER_PART", $"Registered New Part: {fullDetail}", model.PartACode);
 
                 bool success = await _qrService.InsertNewPartAsync(
                     model.PartCode, model.PartName, psz, model.QRCodeData, max, min, model.Category, model.ImageFileName,
-                    model.CustomerCode, model.ModelCode, model.PartACode, model.PartNo
+                    model.CustomerCode, model.Location
                 );
 
                 if (success)
@@ -320,7 +317,6 @@ namespace StoreSteels.ViewModels
                         model.IsShow = true;
                         model.Stock = "0";
                         model.IsActive = true;
-                        model.Location = "N/A";
 
                         Products.Insert(0, model);
                     });
